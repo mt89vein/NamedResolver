@@ -37,6 +37,12 @@ namespace NamedResolver
         /// </summary>
         /// <param name="name">Имя типа.</param>
         /// <param name="type">Тип.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// Если тип с таким именем уже зарегистрирован.
+        /// </exception>
         /// <returns>Регистратор именованных типов.</returns>
         public INamedRegistrator<TInterface> Add(string name, Type type)
         {

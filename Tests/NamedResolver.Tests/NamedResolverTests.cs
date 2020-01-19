@@ -124,6 +124,22 @@ namespace NamedResolver.Tests
         }
 
         [Test]
+        public void GetAllWithPredicate()
+        {
+            var instances = _namedResolver.GetAll(t => t.Name.Contains("T1"));
+
+            Assert.AreEqual(2, instances.Count);
+        }
+
+        [Test]
+        public void GetAllWithNamesPredicate()
+        {
+            var instances = _namedResolver.GetAllWithNames((name, t) => t.Name.Contains("T1"));
+
+            Assert.AreEqual(2, instances.Count);
+        }
+
+        [Test]
         public void DefaultImplementationExplicitlyResolvesCorrectly()
         {
             var dependentClass = _serviceProvider.GetRequiredService<DependentClass>();

@@ -158,17 +158,23 @@ namespace NamedResolver
         /// Если не удалось получить инстанс из провайдера служб.
         /// </exception>
         /// <returns>Список инстансов.</returns>
-        public IReadOnlyList<TInterface> GetAll()
+        public IReadOnlyList<TInterface> GetAll(Func<Type, bool> predicate = null)
         {
             var res = new List<TInterface>();
             foreach (var type in _instanceTypes.Select(t => t.Value))
             {
-                res.Add(Resolve(type));
+                if (predicate == null || predicate(type))
+                {
+                    res.Add(Resolve(type));
+                }
             }
 
             if (_defaultType != null && !_instanceTypes.Values.Any(t => t == _defaultType))
             {
-                res.Add(Resolve(_defaultType));
+                if (predicate == null || predicate(_defaultType))
+                {
+                    res.Add(Resolve(_defaultType));
+                }
             }
 
             return res;
@@ -181,18 +187,25 @@ namespace NamedResolver
         /// Если не удалось получить инстанс из провайдера служб.
         /// </exception>
         /// <returns>Список (имя типа, инстанс)</returns> 
-        public IReadOnlyList<(string name, TInterface instance)> GetAllWithNames()
+        public IReadOnlyList<(string name, TInterface instance)> GetAllWithNames(Func<string, Type, bool> predicate = null)
         {
             var res = new List<(string, TInterface)>();
 
             foreach (var type in _instanceTypes)
             {
-                res.Add((type.Key, Resolve(type.Value)));
+                if (predicate == null || predicate(type.Key, type.Value))
+                {
+                    res.Add((type.Key, Resolve(type.Value)));
+                }
             }
+
 
             if (_defaultType != null && !_instanceTypes.Values.Any(t => t == _defaultType))
             {
-                res.Add((string.Empty, Resolve(_defaultType)));
+                if (predicate == null || predicate(string.Empty, _defaultType))
+                {
+                    res.Add((string.Empty, Resolve(_defaultType)));
+                }
             }
 
             return res;

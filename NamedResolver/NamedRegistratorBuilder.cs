@@ -59,6 +59,12 @@ namespace NamedResolver
         /// </summary>
         /// <param name="type">Тип.</param>
         /// <param name="name">Имя типа.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// Если тип с таким именем уже зарегистрирован.
+        /// </exception>
         /// <returns>Конфгуратор именованных типов.</returns>
         public INamedRegistratorBuilder<TInterface> Add(Type type, string name = null)
         {
@@ -83,6 +89,12 @@ namespace NamedResolver
         /// <param name="type">Тип.</param>
         /// <param name="factory">Фабрика получения типа.</param>
         /// <param name="name">Имя типа.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// Если тип с таким именем уже зарегистрирован.
+        /// </exception>
         /// <returns>Конфгуратор именованных типов.</returns>
         public INamedRegistratorBuilder<TInterface> Add(Type type, Func<IServiceProvider, object> factory, string name = null)
         {
@@ -106,6 +118,12 @@ namespace NamedResolver
         /// </summary>
         /// <typeparam name="TImplementation">Тип реализации.</typeparam>
         /// <param name="name">Имя типа.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// Если тип с таким именем уже зарегистрирован.
+        /// </exception>
         /// <returns>Конфгуратор именованных типов.</returns>
         public INamedRegistratorBuilder<TInterface> Add<TImplementation>(string name = null)
             where TImplementation : class, TInterface
@@ -119,6 +137,12 @@ namespace NamedResolver
         /// <typeparam name="TImplementation">Тип реализации.</typeparam>
         /// <param name="factory">Фабрика получения типа.</param>
         /// <param name="name">Имя типа.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// Если тип с таким именем уже зарегистрирован.
+        /// </exception>
         /// <returns>Конфгуратор именованных типов.</returns>
         public INamedRegistratorBuilder<TInterface> Add<TImplementation>(Func<IServiceProvider, object> factory, string name = null)
             where TImplementation : class, TInterface

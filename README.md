@@ -1,6 +1,6 @@
 # NamedResolver
 
-An abstraction that provide ability to use interface with multiple implementations or configured instances in easy way.
+An abstraction that provide ability to use interface with multiple implementations or preconfigured instances in easy way using local ServiceLocator pattern.
 
 ## Use cases
 
@@ -25,7 +25,7 @@ services.AddScoped<ISomeInterface, SecondImplementation>();
 
 And sometimes we need to resolve one of implementation of interface directly.
 
-In most cases, for resolve, we inject IEnumerable<TInterface> in our DependentClass
+In most cases, for resolve, we inject `IEnumerable<TInterface>` in our DependentClass
 and then search using typeof(T).
 
 ```csharp
@@ -44,9 +44,7 @@ public class DependentClass
 ```
 
 Also we can register to IServiceCollection our implementation without interface,
-and inject implementation into DependenentClass explicitly, but it is not good for unit testing.
-
-That we register like this:
+and inject implementation into DependenentClass explicitly, but it is not good for unit testing:
 
 ```csharp
 
@@ -130,5 +128,25 @@ public class DependentClass
 services.AddNamed<ISomeInterface>(ServiceLifeTime.Scoped)
         .Add<FirstImplementation>("FirstUseCase", _ => new FirstImplementation("FirstUseCase"));
         .Add<FirstImplementation>("SecondUseCase", _ => new FirstImplementation("SecondUseCase"));
+
+```
+
+### Resolve all
+
+```csharp
+
+public class DependentClass
+{
+    private readonly IEnumerable<ISomeInterface> _implementations;
+    private readonly IEnumerable<ISomeInterface> _fromSampleNamespace;
+    private readonly IEnumerable<(string name, ISomeInterface instance)> _implementationsWithNames;
+
+    public DependentClass(INamedResolver<ISomeInterface> resolver)
+    {
+        _implementations = resolver.GetAll();
+        _implementationsWithNames = resolver.GetAllWithNames();
+        _fromSampleNamespace = resolver.GetAll(t => t.Namespace.StartsWith("Sample"));
+	}
+}
 
 ```

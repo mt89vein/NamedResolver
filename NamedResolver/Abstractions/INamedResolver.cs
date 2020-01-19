@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace NamedResolver.Abstractions
 {
@@ -50,13 +51,19 @@ namespace NamedResolver.Abstractions
         /// <summary>
         /// Получить все зарегистрированные типы.
         /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// Если не удалось получить инстанс из провайдера служб.
+        /// </exception>
         /// <returns>Список (имя типа, инстанс)</returns>
-        IReadOnlyList<(string name, TInterface instance)> GetAllWithNames();
+        IReadOnlyList<(string name, TInterface instance)> GetAllWithNames(Func<string, Type, bool> predicate = null);
 
         /// <summary>
         /// Получить все зарегистрированные типы.
         /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// Если не удалось получить инстанс из провайдера служб.
+        /// </exception>
         /// <returns>Список инстансов.</returns>
-        IReadOnlyList<TInterface> GetAll();
+        IReadOnlyList<TInterface> GetAll(Func<Type, bool> predicate = null);
     }
 }
