@@ -53,7 +53,7 @@ public class DependentClass
         _firstImplementation =
             implementations.SingleOrDefault(i => i.GetType() == typeof(FirstImplementation)) ??
             throw new ArgumentNullException($"Cannot resolve instance of type {typeof(FirstImplementation).FullName}");
-	}
+    }
 }
 ```
 
@@ -75,7 +75,7 @@ public class DependentClass
     public DependentClass(FirstImplementation firstImplementation)
     {
         _firstImplementation = firstImplementation;
-	}
+    }
 }
 ```
 
@@ -98,7 +98,7 @@ public class DependentClass
     public DependentClass(INamedResolver<ISomeInterface> resolver)
     {
         _firstImplementation = resolver.Get("First");
-	}
+    }
 }
 ```
 
@@ -130,7 +130,7 @@ public class DependentClass
     {
         // DefaultImplementation would be injected
         _defaultImplementation = someInterface;
-	}
+    }
 }
 
 ```
@@ -160,8 +160,73 @@ public class DependentClass
         _implementations = resolver.GetAll();
         _implementationsWithNames = resolver.GetAllWithNames();
         _fromSampleNamespace = resolver.GetAll(t => t.Namespace.StartsWith("Sample"));
-	}
+    }
 }
+
+```
+
+### Safe TryAdd both generic/non-generic method
+
+```csharp
+
+services.AddNamed<ISomeInterface>(ServiceLifeTime.Scoped)
+        .Add<FirstImplementation>("FirstUseCase", _ => new FirstImplementation("FirstUseCase"));
+	
+	 // instance with name "FirstUseCase" already registered above, this TryAdd with same name has no effect.
+        .TryAdd<FirstImplementation>("FirstUseCase", _ => new FirstImplementation("SecondUseCase")); 
+
+```
+
+### TryAdd use case
+
+this method would be usefull for other libraries.
+Sometimes we want to register some default implementation after user configure callback call, without exceptions or unwanted replaces with unexpected behaviour:
+
+```csharp
+
+#region library code
+
+public class SomeLibraryOptions 
+{
+    public INamedRegistratorBuilder<ISomeInterface> SomeInterfaceRegistrator { get; }
+
+    public SomeLibraryOptions(INamedRegistratorBuilder<ISomeInterface> registratorBuilder)
+    {
+        SomeInterfaceRegistrator = registratorBuilder;
+    }
+}
+
+public static class SomeLibraryServiceCollectionExtensions
+{
+    public static IServiceCollection AddSomeLibrary(this IServiceCollection services, Action<SomeLibraryOptions> configure = null)
+    {
+        // take a builder reference
+        var builder = services.AddNamed<ISomeInterface>();
+
+        // init library options with builder
+        var options = new SomeLibraryOptions(builder);
+
+        // let call configure options callback with user code if it not null
+        configure?.Invoke(options);
+
+        // try to add default implementation, if user not configured it.
+        builder.TryAdd<DefaultImplementation>(); 
+
+        return services;
+    }
+}
+
+#endregion library code
+
+#region user code
+
+services.AddSomeLibrary((options) =>
+{
+    options.SomeInterfaceRegistrator
+           .Add<UserCustomImplementation>(); // registered as default.
+});
+
+#endregion user code
 
 ```
 
