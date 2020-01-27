@@ -56,8 +56,9 @@ namespace NamedResolver
         public NamedResolver(IServiceProvider serviceProvider, INamedRegistrator<TInterface> namedRegistrator)
         {
             _serviceProvider = serviceProvider;
-            _instanceTypes = (namedRegistrator as IHasRegisteredTypeInfos).RegisteredTypes;
-            _defaultType = (namedRegistrator as IHasRegisteredTypeInfos).DefaultType;
+            var registeredTypesAccessor = (IHasRegisteredTypeInfos) namedRegistrator;
+            _instanceTypes = registeredTypesAccessor.RegisteredTypes;
+            _defaultType = registeredTypesAccessor.DefaultType;
         }
 
         #endregion Конструктор
@@ -98,7 +99,7 @@ namespace NamedResolver
         /// из-за некорректного состояния провайдера служб.
         /// т.к. вероятно была перерегистрация или очистка после настройки.
         /// </exception>
-        /// <returns>Инстанс, или <see cref="default{TInterface}" /> если реализация не зарегистрирована.</returns>
+        /// <returns>Инстанс, или <see cref="TInterface" /> если реализация не зарегистрирована.</returns>
         public TInterface Get(string name = null)
         {
             if (string.IsNullOrEmpty(name))
@@ -169,7 +170,7 @@ namespace NamedResolver
                 }
             }
 
-            if (_defaultType != null && !_instanceTypes.Values.Any(t => t == _defaultType))
+            if (_defaultType != null && _instanceTypes.Values.All(t => t != _defaultType))
             {
                 if (predicate == null || predicate(_defaultType))
                 {
@@ -199,8 +200,7 @@ namespace NamedResolver
                 }
             }
 
-
-            if (_defaultType != null && !_instanceTypes.Values.Any(t => t == _defaultType))
+            if (_defaultType != null && _instanceTypes.Values.All(t => t != _defaultType))
             {
                 if (predicate == null || predicate(string.Empty, _defaultType))
                 {

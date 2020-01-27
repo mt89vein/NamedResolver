@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using NamedResolver.Abstractions;
-using NamedResolver.Extensions;
 using NamedResolver.Tests.TestClasses;
 using NUnit.Framework;
 using System;

@@ -44,7 +44,7 @@ namespace NamedResolver
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
         /// <returns>Регистратор именованных типов.</returns>
-        public INamedRegistrator<TInterface> Add(string name, Type type)
+        public void Add(string name, Type type)
         {
             if (!typeof(TInterface).IsAssignableFrom(type))
             {
@@ -60,17 +60,55 @@ namespace NamedResolver
 
                 DefaultType = type;
 
-                return this;
+                return;
             }
 
             if (!_instanceTypes.ContainsKey(name))
             {
                 _instanceTypes.Add(name, type);
 
-                return this;
+                return;
             }
 
             throw new InvalidOperationException($"Тип с именем {name} уже зарегистрирован");
+        }
+
+        /// <summary>
+        /// Попытаться зарегистрировать тип, если еще не зарегистрировано.
+        /// </summary>
+        /// <param name="name">Имя типа.</param>
+        /// <param name="type">Тип.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
+        /// </exception>
+        /// <returns>Регистратор именованных типов.</returns>
+        public bool TryAdd(string name, Type type)
+        {
+            if (!typeof(TInterface).IsAssignableFrom(type))
+            {
+                throw new InvalidOperationException($"Тип {type.FullName} не реализует интерфейс {typeof(TInterface).FullName}");
+            }
+
+            if (string.IsNullOrEmpty(name))
+            {
+                if (DefaultType == null)
+                {
+                    DefaultType = type;
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (!_instanceTypes.ContainsKey(name))
+            {
+                _instanceTypes.Add(name, type);
+
+                return true;
+            }
+
+            return false;
         }
 
         #endregion Методы (public)

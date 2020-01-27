@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using NamedResolver.Abstractions;
 
-namespace NamedResolver.Extensions
+namespace NamedResolver
 {
     /// <summary>
     /// Методы расширения для <see cref="IServiceCollection" />.

@@ -3,10 +3,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NamedRegistration;
+using NamedResolver;
 using NamedResolver.Abstractions;
-using NamedResolver.Extensions;
 
-namespace NamedRegistration
+namespace Sample
 {
     public class Startup
     {
