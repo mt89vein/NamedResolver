@@ -163,11 +163,11 @@ namespace NamedResolver.Tests
         }
 
         [Test]
-        public void DefaultInstanceDoesNotIncludesInGetAll()
+        public void DefaultInstanceIncludesInGetAll()
         {
             var instances = _namedResolver.GetAll();
 
-            Assert.AreEqual(7, instances.Count);
+            Assert.AreEqual(8, instances.Count);
         }
 
         [Test]
@@ -178,8 +178,8 @@ namespace NamedResolver.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.AreEqual(7, instances.Count);
-                Assert.IsNull(defaultInstance);
+                Assert.AreEqual(8, instances.Count);
+                Assert.IsNotNull(defaultInstance);
             });
         }
 
@@ -188,7 +188,7 @@ namespace NamedResolver.Tests
         {
             var instances = _namedResolver.GetAll(t => t.Name.Contains("T1"));
 
-            Assert.AreEqual(2, instances.Count);
+            Assert.AreEqual(3, instances.Count);
         }
 
         [Test]
@@ -196,7 +196,7 @@ namespace NamedResolver.Tests
         {
             var instances = _namedResolver.GetAllWithNames((name, t) => t.Name.Contains("T1"));
 
-            Assert.AreEqual(2, instances.Count);
+            Assert.AreEqual(3, instances.Count);
         }
 
         [Test]

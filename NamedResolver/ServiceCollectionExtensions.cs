@@ -14,7 +14,7 @@ namespace NamedResolver
         /// <typeparam name="TInterface">Тип интерфейса.</typeparam>
         /// <param name="services">Конфигуратор сервисов.</param>
         /// <param name="serviceLifetime">Жизненный цикл сервисов.</param>
-        /// <returns>Конфгиратор именнованных типов.</returns>
+        /// <returns>Конфигуратор именнованных типов.</returns>
         public static INamedRegistratorBuilder<TInterface> AddNamed<TInterface>(
             this IServiceCollection services,
             ServiceLifetime serviceLifetime = ServiceLifetime.Scoped

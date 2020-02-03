@@ -26,9 +26,19 @@ namespace NamedResolver
         private readonly IReadOnlyDictionary<string, Type> _instanceTypes;
 
         /// <summary>
+        /// Список зарегистрированных фабрик типов.
+        /// </summary>
+        private readonly IReadOnlyDictionary<string, Func<IServiceProvider, TInterface>> _instanceTypeFactories;
+
+        /// <summary>
         /// Тип по-умолчанию.
         /// </summary>
         private readonly Type _defaultType;
+
+        /// <summary>
+        /// Фабрика типа по-умолчанию.
+        /// </summary>
+        private readonly Func<IServiceProvider, TInterface> _defaultTypeFactory;
 
         #endregion Поля
 
@@ -51,14 +61,16 @@ namespace NamedResolver
         /// <summary>
         /// Создает экземпляр класса <see cref="INamedResolver{TInterface}"/>.
         /// </summary>
-        /// <param name="serviceProvider">Провадер служб.</param>
+        /// <param name="serviceProvider">Провайдер служб.</param>
         /// <param name="namedRegistrator">Регистратор именованных типов.</param>
         public NamedResolver(IServiceProvider serviceProvider, INamedRegistrator<TInterface> namedRegistrator)
         {
             _serviceProvider = serviceProvider;
-            var registeredTypesAccessor = (IHasRegisteredTypeInfos) namedRegistrator;
+            var registeredTypesAccessor = (IHasRegisteredTypeInfos<TInterface>) namedRegistrator;
             _instanceTypes = registeredTypesAccessor.RegisteredTypes;
             _defaultType = registeredTypesAccessor.DefaultType;
+            _instanceTypeFactories = registeredTypesAccessor.RegisteredTypesFactories;
+            _defaultTypeFactory = registeredTypesAccessor.DefaultTypeFactory;
         }
 
         #endregion Конструктор
@@ -104,17 +116,27 @@ namespace NamedResolver
         {
             if (string.IsNullOrEmpty(name))
             {
-                if (_defaultType == null)
+                if (_defaultType != null)
                 {
-                    return default;
+                    return Resolve(_defaultType);
                 }
 
-                return Resolve(_defaultType);
+                if (_defaultTypeFactory != null)
+                {
+                    return Resolve(_defaultTypeFactory);
+                }
+
+                return default;
             }
 
             if (_instanceTypes.TryGetValue(name, out var type))
             {
                 return Resolve(type);
+            }
+
+            if (_instanceTypeFactories.TryGetValue(name, out var factory))
+            {
+                return Resolve(factory);
             }
 
             return default;
@@ -135,9 +157,15 @@ namespace NamedResolver
 
             if (string.IsNullOrEmpty(name))
             {
-                instance = _defaultType != null
-                    ? ResolveSafe(_defaultType)
-                    : default;
+                if (_defaultType != null)
+                {
+                    instance = ResolveSafe(_defaultType);
+                }
+
+                if (_defaultTypeFactory != null)
+                {
+                    instance = ResolveSafe(_defaultTypeFactory);
+                }
 
                 return instance != null;
             }
@@ -145,6 +173,13 @@ namespace NamedResolver
             if (_instanceTypes.TryGetValue(name, out var type))
             {
                 instance = ResolveSafe(type);
+
+                return instance != null;
+            }
+
+            if (_instanceTypeFactories.TryGetValue(name, out var factory))
+            {
+                instance = ResolveSafe(factory);
 
                 return instance != null;
             }
@@ -170,11 +205,29 @@ namespace NamedResolver
                 }
             }
 
-            if (_defaultType != null && _instanceTypes.Values.All(t => t != _defaultType))
+            foreach (var factory in _instanceTypeFactories.Select(t => t.Value))
+            {
+                var resolvedTypeInstance = Resolve(factory);
+                if (predicate == null || predicate(resolvedTypeInstance.GetType()))
+                {
+                    res.Add(resolvedTypeInstance);
+                }
+            }
+
+            if (_defaultType != null)
             {
                 if (predicate == null || predicate(_defaultType))
                 {
                     res.Add(Resolve(_defaultType));
+                }
+            }
+
+            if (_defaultTypeFactory != null)
+            {
+                var resolvedTypeInstance = Resolve(_defaultTypeFactory);
+                if (predicate == null || predicate(resolvedTypeInstance.GetType()))
+                {
+                    res.Add(resolvedTypeInstance);
                 }
             }
 
@@ -200,11 +253,29 @@ namespace NamedResolver
                 }
             }
 
-            if (_defaultType != null && _instanceTypes.Values.All(t => t != _defaultType))
+            foreach (var typeFactory in _instanceTypeFactories)
+            {
+                var resolvedTypeInstance = Resolve(typeFactory.Value);
+                if (predicate == null || predicate(typeFactory.Key, resolvedTypeInstance.GetType()))
+                {
+                    res.Add((typeFactory.Key, resolvedTypeInstance));
+                }
+            }
+
+            if (_defaultType != null)
             {
                 if (predicate == null || predicate(string.Empty, _defaultType))
                 {
                     res.Add((string.Empty, Resolve(_defaultType)));
+                }
+            }
+
+            if (_defaultTypeFactory != null)
+            {
+                var resolvedTypeInstance = Resolve(_defaultTypeFactory);
+                if (predicate == null || predicate(string.Empty, resolvedTypeInstance.GetType()))
+                {
+                    res.Add((string.Empty, resolvedTypeInstance));
                 }
             }
 
@@ -231,11 +302,34 @@ namespace NamedResolver
         /// <summary>
         /// Получить инстанс из провайдера служб.
         /// </summary>
+        /// <param name="factory">Фабрика типа.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Если не удалось получить инстанс из провайдера служб.
+        /// </exception>
+        /// <returns>Инстанс.</returns>
+        private TInterface Resolve(Func<IServiceProvider, TInterface> factory)
+        {
+            return factory(_serviceProvider);
+        }
+
+        /// <summary>
+        /// Получить инстанс из провайдера служб.
+        /// </summary>
         /// <param name="type">Тип.</param>
         /// <returns>Инстанс.</returns>
         private TInterface ResolveSafe(Type type)
         {
             return _serviceProvider.GetService(type) as TInterface;
+        }
+
+        /// <summary>
+        /// Получить инстанс из провайдера служб.
+        /// </summary>
+        /// <param name="factory">Фабрика типа.</param>
+        /// <returns>Инстанс.</returns>
+        private TInterface ResolveSafe(Func<IServiceProvider, TInterface> factory)
+        {
+            return factory(_serviceProvider);
         }
 
         #endregion Методы (private)

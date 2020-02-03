@@ -6,7 +6,7 @@ using System;
 namespace NamedResolver
 {
     /// <summary>
-    /// Конфгуратор именованных типов.
+    /// Конфигуратор именованных типов.
     /// </summary>
     /// <typeparam name="TInterface">Тип интерфейса.</typeparam>
     internal sealed class NamedRegistratorBuilder<TInterface> : INamedRegistratorBuilder<TInterface>
@@ -65,7 +65,7 @@ namespace NamedResolver
         /// <exception cref="InvalidOperationException">
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
-        /// <returns>Конфгуратор именованных типов.</returns>
+        /// <returns>Конфигуратор именованных типов.</returns>
         public INamedRegistratorBuilder<TInterface> Add(Type type, string name = null)
         {
             _namedRegistrator.Add(name, type);
@@ -91,7 +91,7 @@ namespace NamedResolver
         /// <exception cref="InvalidOperationException">
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
-        /// <returns>Конфгуратор именованных типов.</returns>
+        /// <returns>Конфигуратор именованных типов.</returns>
         public INamedRegistratorBuilder<TInterface> TryAdd(Type type, string name = null)
         {
             if (_namedRegistrator.TryAdd(name, type))
@@ -122,10 +122,10 @@ namespace NamedResolver
         /// <exception cref="InvalidOperationException">
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
-        /// <returns>Конфгуратор именованных типов.</returns>
-        public INamedRegistratorBuilder<TInterface> Add(Type type, Func<IServiceProvider, object> factory, string name = null)
+        /// <returns>Конфигуратор именованных типов.</returns>
+        public INamedRegistratorBuilder<TInterface> Add(Type type, Func<IServiceProvider, TInterface> factory, string name = null)
         {
-            _namedRegistrator.Add(name, type);
+            _namedRegistrator.Add(name, factory);
 
             _services.TryAdd(new ServiceDescriptor(type, factory, _serviceLifetime));
             if (name == null)
@@ -149,8 +149,8 @@ namespace NamedResolver
         /// <exception cref="InvalidOperationException">
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
-        /// <returns>Конфгуратор именованных типов.</returns>
-        public INamedRegistratorBuilder<TInterface> TryAdd(Type type, Func<IServiceProvider, object> factory, string name = null)
+        /// <returns>Конфигуратор именованных типов.</returns>
+        public INamedRegistratorBuilder<TInterface> TryAdd(Type type, Func<IServiceProvider, TInterface> factory, string name = null)
         {
             if (_namedRegistrator.TryAdd(name, type))
             {
@@ -179,7 +179,7 @@ namespace NamedResolver
         /// <exception cref="InvalidOperationException">
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
-        /// <returns>Конфгуратор именованных типов.</returns>
+        /// <returns>Конфигуратор именованных типов.</returns>
         public INamedRegistratorBuilder<TInterface> Add<TImplementation>(string name = null)
             where TImplementation : class, TInterface
         {
@@ -194,7 +194,7 @@ namespace NamedResolver
         /// <exception cref="InvalidOperationException">
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
-        /// <returns>Конфгуратор именованных типов.</returns>
+        /// <returns>Конфигуратор именованных типов.</returns>
         public INamedRegistratorBuilder<TInterface> TryAdd<TImplementation>(string name = null)
             where TImplementation : class, TInterface
         {
@@ -213,8 +213,8 @@ namespace NamedResolver
         /// <exception cref="InvalidOperationException">
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
-        /// <returns>Конфгуратор именованных типов.</returns>
-        public INamedRegistratorBuilder<TInterface> Add<TImplementation>(Func<IServiceProvider, object> factory, string name = null)
+        /// <returns>Конфигуратор именованных типов.</returns>
+        public INamedRegistratorBuilder<TInterface> Add<TImplementation>(Func<IServiceProvider, TInterface> factory, string name = null)
             where TImplementation : class, TInterface
         {
             return Add(typeof(TImplementation), factory, name);
@@ -229,8 +229,8 @@ namespace NamedResolver
         /// <exception cref="InvalidOperationException">
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
-        /// <returns>Конфгуратор именованных типов.</returns>
-        public INamedRegistratorBuilder<TInterface> TryAdd<TImplementation>(Func<IServiceProvider, object> factory, string name = null)
+        /// <returns>Конфигуратор именованных типов.</returns>
+        public INamedRegistratorBuilder<TInterface> TryAdd<TImplementation>(Func<IServiceProvider, TInterface> factory, string name = null)
             where TImplementation : class, TInterface
         {
             return TryAdd(typeof(TImplementation), factory, name);

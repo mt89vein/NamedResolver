@@ -24,6 +24,17 @@ namespace NamedResolver.Abstractions
         void Add(string name, Type type);
 
         /// <summary>
+        /// Зарегистрировать фабрику.
+        /// </summary>
+        /// <param name="name">Имя инстанса.</param>
+        /// <param name="factory">Фабрика типа.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Если тип с таким именем уже зарегистрирован.
+        /// </exception>
+        /// <returns>Регистратор именованных типов.</returns>
+        void Add(string name, Func<IServiceProvider, TInterface> factory);
+
+        /// <summary>
         /// Попытаться зарегистрировать тип, если еще не зарегистрировано.
         /// </summary>
         /// <param name="name">Имя типа.</param>
@@ -33,5 +44,13 @@ namespace NamedResolver.Abstractions
         /// </exception>
         /// <returns>Регистратор именованных типов.</returns>
         bool TryAdd(string name, Type type);
+
+        /// <summary>
+        /// Попытаться зарегистрировать тип, если еще не зарегистрировано.
+        /// </summary>
+        /// <param name="name">Имя типа.</param>
+        /// <param name="factory">Фабрика типа.</param>
+        /// <returns>Регистратор именованных типов.</returns>
+        bool TryAdd(string name, Func<IServiceProvider, TInterface> factory);
     }
 }
