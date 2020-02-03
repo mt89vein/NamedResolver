@@ -127,7 +127,7 @@ namespace NamedResolver
         {
             _namedRegistrator.Add(name, type);
 
-            _services.TryAdd(new ServiceDescriptor(type, type, _serviceLifetime));
+            _services.TryAdd(new ServiceDescriptor(type, factory, _serviceLifetime));
             if (name == null)
             {
                 _services.TryAdd(new ServiceDescriptor(
@@ -154,7 +154,7 @@ namespace NamedResolver
         {
             if (_namedRegistrator.TryAdd(name, type))
             {
-                _services.TryAdd(new ServiceDescriptor(type, type, _serviceLifetime));
+                _services.TryAdd(new ServiceDescriptor(type, factory, _serviceLifetime));
                 if (name == null)
                 {
                     _services.TryAdd(new ServiceDescriptor(
