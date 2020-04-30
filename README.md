@@ -28,7 +28,7 @@ public class FirstImplementation : ISomeInterface {}
 public class SecondImplementation : ISomeInterface {}
 ```
 
-And we register like this:
+And register in dependency injection container like this:
 
 ```csharp
 
@@ -84,7 +84,7 @@ Same with NamedResolver
 
 ```csharp
 
-services.AddNamed<ISomeInterface>(ServiceLifeTime.Scoped)
+services.AddNamed<string, ISomeInterface>(ServiceLifeTime.Scoped)
         .Add<FirstImplementation>("First");
         .Add<SecondImplementation>("Second");
 
@@ -95,7 +95,7 @@ public class DependentClass
 {
     private readonly ISomeInterface _firstImplementation;
 
-    public DependentClass(INamedResolver<ISomeInterface> resolver)
+    public DependentClass(INamedResolver<string, ISomeInterface> resolver)
     {
         _firstImplementation = resolver.Get("First");
     }
@@ -113,7 +113,7 @@ public class DefaultImplementation : ISomeInterface {}
 
 ```csharp
 
-services.AddNamed<ISomeInterface>(ServiceLifeTime.Scoped)
+services.AddNamed<string, ISomeInterface>(ServiceLifeTime.Scoped)
         .Add<FirstImplementation>("First");
         .Add<SecondImplementation>("Second")
         .Add<DefaultImplementation>(); // default - without name parameter
@@ -139,11 +139,33 @@ public class DependentClass
 
 ```csharp
 
-services.AddNamed<ISomeInterface>(ServiceLifeTime.Scoped)
+services.AddNamed<string, ISomeInterface>(ServiceLifeTime.Scoped)
         .Add<FirstImplementation>("FirstUseCase", _ => new FirstImplementation("FirstUseCase"));
         .Add<FirstImplementation>("SecondUseCase", _ => new FirstImplementation("SecondUseCase"));
 
 ```
+
+### Enum or custom class as discriminator
+
+```csharp
+
+public enum MyEnum
+{
+    Default = 0,
+    FirstUseCase = 1,
+    SecondUseCase = 2
+}
+
+services.AddNamed<MyEnum, ISomeInterface>()
+        .Add<FirstImplementation>(MyEnum.FirstUseCase)
+        .Add<SecondImplementation>(MyEnum.SecondUseCase)
+        .Add<DefaultImplementation>(); // or MyEnum.Default
+
+```
+
+for correct search type by class you also should implement IEquatable<T>
+or IEqualityComparer<T> and provide it to AddNamed method.
+By default used EqualityComparer<T>.Default
 
 ### Resolve all
 
@@ -155,7 +177,7 @@ public class DependentClass
     private readonly IEnumerable<ISomeInterface> _fromSampleNamespace;
     private readonly IEnumerable<(string name, ISomeInterface instance)> _implementationsWithNames;
 
-    public DependentClass(INamedResolver<ISomeInterface> resolver)
+    public DependentClass(INamedResolver<string, ISomeInterface> resolver)
     {
         _implementations = resolver.GetAll();
         _implementationsWithNames = resolver.GetAllWithNames();
@@ -164,15 +186,51 @@ public class DependentClass
 }
 
 ```
+or with IReadOnlyList<T>. With injecting IEnumerable<T> you get only default implementation or InvalidOperationException.
+```csharp
+
+public class DependentClass
+{
+    private readonly IReadOnlyList<ISomeInterface> _implementations;
+
+    // same result as INamedResolver<string, ISomeInterface>.GetAll method
+    public DependentClass(IReadOnlyList<ISomeInterface> implementations)
+    {
+        _implementations = implementations;
+    }
+}
+
+```
+
+### Resolve with delegate
+
+```csharp
+
+public delegate TInterface ResolveNamed<in TDiscriminator, out TInterface>(
+    TDiscriminator name = default
+)
+
+public class SomeClass
+{
+    private readonly ISomeInterface _implementation;
+
+    public SomeClass(ResolveNamed<string, ISomeInterface> resolveNamedFunc)
+    {
+        _implementation = resolveNamedFunc("Test");
+	}
+}
+```
+
+
 
 ### Safe TryAdd both generic/non-generic method
 
 ```csharp
 
-services.AddNamed<ISomeInterface>(ServiceLifeTime.Scoped)
+services.AddNamed<string, ISomeInterface>(ServiceLifeTime.Scoped)
         .Add<FirstImplementation>("FirstUseCase", _ => new FirstImplementation("FirstUseCase"));
-	
-	 // instance with name "FirstUseCase" already registered above, this TryAdd with same name has no effect.
+        // instance with name "FirstUseCase" already registered above,
+        // this TryAdd with same name has no effect.
         .TryAdd<FirstImplementation>("FirstUseCase", _ => new FirstImplementation("SecondUseCase")); 
 
 ```
@@ -188,9 +246,9 @@ Sometimes we want to register some default implementation after user configure c
 
 public class SomeLibraryOptions 
 {
-    public INamedRegistratorBuilder<ISomeInterface> SomeInterfaceRegistrator { get; }
+    public INamedRegistratorBuilder<string, ISomeInterface> SomeInterfaceRegistrator { get; }
 
-    public SomeLibraryOptions(INamedRegistratorBuilder<ISomeInterface> registratorBuilder)
+    public SomeLibraryOptions(INamedRegistratorBuilder<string, ISomeInterface> registratorBuilder)
     {
         SomeInterfaceRegistrator = registratorBuilder;
     }
@@ -201,7 +259,7 @@ public static class SomeLibraryServiceCollectionExtensions
     public static IServiceCollection AddSomeLibrary(this IServiceCollection services, Action<SomeLibraryOptions> configure = null)
     {
         // take a builder reference
-        var builder = services.AddNamed<ISomeInterface>();
+        var builder = services.AddNamed<string, ISomeInterface>();
 
         // init library options with builder
         var options = new SomeLibraryOptions(builder);

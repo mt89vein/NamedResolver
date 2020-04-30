@@ -8,25 +8,26 @@ using System.Linq;
 
 namespace NamedResolver.Tests
 {
-    [TestFixtureSource(nameof(TestFixtureCases))]
+    [TestFixtureSource(nameof(StringTestFixtureCases))]
     public class NamedResolverTests
     {
         #region Поля
 
-        private readonly INamedResolver<ITest> _namedResolver;
+        private readonly INamedResolver<string, ITest> _namedResolver;
+        private readonly ResolveNamed<string, ITest> _resolveNamedDelegate;
         private readonly IServiceProvider _serviceProvider;
 
         #endregion Поля
 
         #region Конструктор теста
 
-        public static IEnumerable<TestFixtureData> TestFixtureCases()
+        public static IEnumerable<TestFixtureData> StringTestFixtureCases()
         {
             {
                 var services = new ServiceCollection();
 
                 services.AddSingleton<DependentClass>();
-                services.AddNamed<ITest>(ServiceLifetime.Singleton)
+                services.AddNamed<string, ITest>(ServiceLifetime.Singleton)
                     .Add<T1>("T1")
                     .Add(typeof(T1), "T1-1")
                     .Add<T2>("T2")
@@ -35,15 +36,22 @@ namespace NamedResolver.Tests
                     .Add<T2>(sp => sp.GetRequiredService<T2>(), "T2-1-Generic-Factory")
                     .Add<T2>("TTT")
                     .Add<T1>(sp => sp.GetRequiredService<T1>());
-
-                yield return new TestFixtureData("FirstFixtureCase", services.BuildServiceProvider());
+                // TODO: резолвер в виде функи, которую можно заинжектить
+                // TODO: желательно еще IEnumerable чтобы тоже можно было инжектить
+                // TODO: валидатор зависимостей, чтобы все зависимости точно были зареганы.
+                // TODO: десяток методов расширений, которые инжектят нужные типы, либо через активатор утилиту
+                // TODO: враппер для декоратора.
+                // в DI регается только резолвер, а инстансы - нет. т.е. без регистрации в DI - всё через активатор
+                // TODO: Before after resolve хуки ?
+                // TODO: пересмотреть способ хранения словаря, чтобы резолв был и быстрый и удобный
+                yield return new TestFixtureData("StringFirstFixtureCase", services.BuildServiceProvider());
             }
 
             {
                 var services = new ServiceCollection();
 
                 services.AddSingleton<DependentClass>();
-                services.AddNamed<ITest>(ServiceLifetime.Singleton)
+                services.AddNamed<string, ITest>(ServiceLifetime.Singleton)
                     .TryAdd<T1>("T1") // +
                     .TryAdd(typeof(T1), "T1-1") // +
                     .TryAdd<T1>(sp => sp.GetRequiredService<T1>(), "T1-1") // -
@@ -55,14 +63,14 @@ namespace NamedResolver.Tests
                     .TryAdd(typeof(T1)) // +
                     .TryAdd<T1>(sp => sp.GetRequiredService<T1>()); // -
 
-                yield return new TestFixtureData("SecondFixtureCase", services.BuildServiceProvider());
+                yield return new TestFixtureData("StringSecondFixtureCase", services.BuildServiceProvider());
             }
 
             {
                 var services = new ServiceCollection();
 
                 services.AddSingleton<DependentClass>();
-                services.AddNamed<ITest>(ServiceLifetime.Singleton)
+                services.AddNamed<string, ITest>(ServiceLifetime.Singleton)
                     .TryAdd<T1>("T1") // +
                     .TryAdd(typeof(T1), "T1-1") // +
                     .TryAdd<T1>(sp => sp.GetRequiredService<T1>(), "T1-1") // -
@@ -73,14 +81,14 @@ namespace NamedResolver.Tests
                     .TryAdd(typeof(T2), "TTT") // +
                     .Add(typeof(T1)); // +
 
-                yield return new TestFixtureData("ThirdFixtureCase", services.BuildServiceProvider());
+                yield return new TestFixtureData("StringThirdFixtureCase", services.BuildServiceProvider());
             }
 
             {
                 var services = new ServiceCollection();
 
                 services.AddSingleton<DependentClass>();
-                services.AddNamed<ITest>(ServiceLifetime.Singleton)
+                services.AddNamed<string, ITest>(ServiceLifetime.Singleton)
                     .TryAdd<T1>("T1") // +
                     .TryAdd(typeof(T1), "T1-1") // +
                     .TryAdd<T1>(sp => sp.GetRequiredService<T1>(), "T1-1") // -
@@ -91,13 +99,14 @@ namespace NamedResolver.Tests
                     .TryAdd(typeof(T2), "TTT") // +
                     .TryAdd(typeof(T1), sp => sp.GetRequiredService<T1>()); // +
 
-                yield return new TestFixtureData("FourthFixtureCase", services.BuildServiceProvider());
+                yield return new TestFixtureData("StringFourthFixtureCase", services.BuildServiceProvider());
             }
         }
 
         public NamedResolverTests(string caseName, IServiceProvider sp)
         {
-            _namedResolver = sp.GetRequiredService<INamedResolver<ITest>>();
+            _namedResolver = sp.GetRequiredService<INamedResolver<string, ITest>>();
+            _resolveNamedDelegate = sp.GetRequiredService<ResolveNamed<string, ITest>>();
             _serviceProvider = sp;
         }
 
@@ -111,28 +120,32 @@ namespace NamedResolver.Tests
         [TestCase("T2-1-Factory", typeof(T2))]
         [TestCase("T2-1-Generic-Factory", typeof(T2))]
         [TestCase("TTT", typeof(T2))]
-        [TestCase("", typeof(T1))]
+        [TestCase(default(string), typeof(T1))]
         [TestCase(null, typeof(T1))]
         public void CorrectlyResolveByName(string name, Type type)
         {
             var fromGet = _namedResolver.Get(name);
             var itemFound = _namedResolver.TryGet(out var fromTryGet, name);
             var fromIndexer = _namedResolver[name];
+            var fromDelegate = _resolveNamedDelegate(name);
 
             Assert.Multiple(() =>
             {
                 Assert.IsNotNull(fromGet);
                 Assert.IsNotNull(fromTryGet);
                 Assert.IsNotNull(fromIndexer);
+                Assert.IsNotNull(fromDelegate);
 
                 Assert.IsTrue(itemFound);
 
                 Assert.AreEqual(type, fromGet.GetType());
                 Assert.AreEqual(type, fromTryGet.GetType());
                 Assert.AreEqual(type, fromIndexer.GetType());
+                Assert.AreEqual(type, fromDelegate.GetType());
 
                 Assert.AreSame(fromGet, fromTryGet);
                 Assert.AreSame(fromIndexer, fromTryGet);
+                Assert.AreSame(fromDelegate, fromTryGet);
             });
         }
 
@@ -146,10 +159,12 @@ namespace NamedResolver.Tests
                 var fromGet = _namedResolver.Get(name);
                 var itemFound = _namedResolver.TryGet(out var fromTryGet, name);
                 var fromIndexer = _namedResolver[name];
+                var fromDelegate = _resolveNamedDelegate(name);
 
                 Assert.IsNull(fromGet);
                 Assert.IsNull(fromTryGet);
                 Assert.IsNull(fromIndexer);
+                Assert.IsNull(fromDelegate);
                 Assert.IsFalse(itemFound);
             });
         }

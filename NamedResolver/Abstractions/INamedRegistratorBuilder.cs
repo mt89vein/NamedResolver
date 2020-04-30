@@ -6,7 +6,10 @@ namespace NamedResolver.Abstractions
     /// Конфигуратор именованных типов.
     /// </summary>
     /// <typeparam name="TInterface">Тип интерфейса.</typeparam>
-    public interface INamedRegistratorBuilder<TInterface>
+    /// <typeparam name="TDiscriminator">
+    /// Тип, по которому можно однозначно определить конкретную реализацию <see cref="TInterface"/>.
+    /// </typeparam>
+    public interface INamedRegistratorBuilder<in TDiscriminator, in TInterface>
         where TInterface : class
     {
         /// <summary>
@@ -15,7 +18,7 @@ namespace NamedResolver.Abstractions
         /// <param name="type">Тип.</param>
         /// <param name="name">Имя типа.</param>
         /// <returns>Конфигуратор именованных типов.</returns>
-        INamedRegistratorBuilder<TInterface> Add(Type type, string name = null);
+        INamedRegistratorBuilder<TDiscriminator, TInterface> Add(Type type, TDiscriminator name = default);
 
         /// <summary>
         /// Попытаться зарегистрировать тип с указанным именем.
@@ -26,7 +29,7 @@ namespace NamedResolver.Abstractions
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        INamedRegistratorBuilder<TInterface> TryAdd(Type type, string name = null);
+        INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd(Type type, TDiscriminator name = default);
 
         /// <summary>
         /// Зарегистрировать тип с указанным именем.
@@ -35,7 +38,7 @@ namespace NamedResolver.Abstractions
         /// <param name="factory">Фабрика получения типа.</param>
         /// <param name="name">Имя типа.</param>
         /// <returns>Конфигуратор именованных типов.</returns>
-        INamedRegistratorBuilder<TInterface> Add(Type type, Func<IServiceProvider, TInterface> factory, string name = null);
+        INamedRegistratorBuilder<TDiscriminator, TInterface> Add(Type type, Func<IServiceProvider, TInterface> factory, TDiscriminator name = default);
 
         /// <summary>
         /// Попытаться зарегистрировать тип с указанным именем.
@@ -47,7 +50,7 @@ namespace NamedResolver.Abstractions
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        INamedRegistratorBuilder<TInterface> TryAdd(Type type, Func<IServiceProvider, TInterface> factory, string name = null);
+        INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd(Type type, Func<IServiceProvider, TInterface> factory, TDiscriminator name = default);
 
         /// <summary>
         /// Зарегистрировать тип с указанным именем.
@@ -55,7 +58,7 @@ namespace NamedResolver.Abstractions
         /// <typeparam name="TImplementation">Тип реализации.</typeparam>
         /// <param name="name">Имя типа.</param>
         /// <returns>Конфигуратор именованных типов.</returns>
-        INamedRegistratorBuilder<TInterface> Add<TImplementation>(string name = null)
+        INamedRegistratorBuilder<TDiscriminator, TInterface> Add<TImplementation>(TDiscriminator name = default)
             where TImplementation : class, TInterface;
 
         /// <summary>
@@ -67,7 +70,7 @@ namespace NamedResolver.Abstractions
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        INamedRegistratorBuilder<TInterface> TryAdd<TImplementation>(string name = null)
+        INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd<TImplementation>(TDiscriminator name = default)
             where TImplementation : class, TInterface;
 
         /// <summary>
@@ -77,7 +80,7 @@ namespace NamedResolver.Abstractions
         /// <param name="factory">Фабрика получения типа.</param>
         /// <param name="name">Имя типа.</param>
         /// <returns>Конфигуратор именованных типов.</returns>
-        INamedRegistratorBuilder<TInterface> Add<TImplementation>(Func<IServiceProvider, TInterface> factory, string name = null)
+        INamedRegistratorBuilder<TDiscriminator, TInterface> Add<TImplementation>(Func<IServiceProvider, TInterface> factory, TDiscriminator name = default)
             where TImplementation : class, TInterface;
 
         /// <summary>
@@ -90,7 +93,7 @@ namespace NamedResolver.Abstractions
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        INamedRegistratorBuilder<TInterface> TryAdd<TImplementation>(Func<IServiceProvider, TInterface> factory, string name = null)
+        INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd<TImplementation>(Func<IServiceProvider, TInterface> factory, TDiscriminator name = default)
             where TImplementation : class, TInterface;
     }
 }

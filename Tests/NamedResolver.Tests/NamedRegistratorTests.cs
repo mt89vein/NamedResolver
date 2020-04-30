@@ -5,12 +5,12 @@ using System;
 
 namespace NamedResolver.Tests
 {
-    [TestFixture(TestOf = typeof(INamedRegistrator<>))]
+    [TestFixture(TestOf = typeof(INamedRegistrator<,>))]
     public class NamedRegistratorTests
     {
         #region Поля
 
-        private INamedRegistrator<ITest> _namedRegistrator;
+        private INamedRegistrator<string, ITest> _namedRegistrator;
 
         #endregion Поля
 
@@ -19,7 +19,7 @@ namespace NamedResolver.Tests
         [SetUp]
         public void Setup()
         {
-            _namedRegistrator = new NamedRegistrator<ITest>();
+            _namedRegistrator = new NamedRegistrator<string, ITest>(StringComparer.OrdinalIgnoreCase);
         }
 
         #endregion Конструктор теста
@@ -46,18 +46,46 @@ namespace NamedResolver.Tests
             {
                 Assert.IsTrue(_namedRegistrator.TryAdd("T1", typeof(T2)));
                 Assert.IsTrue(_namedRegistrator.TryAdd(null, typeof(T2)));
-                Assert.IsTrue(_namedRegistrator.TryAdd("T2", typeof(T2)));
+                Assert.IsTrue(_namedRegistrator.TryAdd("T3", typeof(T1)));
+                Assert.IsFalse(_namedRegistrator.TryAdd("T3", typeof(T2)));
+                Assert.IsTrue(_namedRegistrator.TryAdd("T4", typeof(T2)));
+                Assert.IsFalse(_namedRegistrator.TryAdd("T4", typeof(T2)));
+            });
+        }
+
+        [Test]
+        public void AllowTryAddSameTypeFactoryMultipleTimes()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.IsTrue(_namedRegistrator.TryAdd("T5", sp => new T2()));
+                Assert.IsFalse(_namedRegistrator.TryAdd("T5", sp => new T2()));
+                Assert.IsTrue(_namedRegistrator.TryAdd("T1", typeof(T2)));
+                Assert.IsTrue(_namedRegistrator.TryAdd(null, sp => new T2()));
+                Assert.IsFalse(_namedRegistrator.TryAdd(default, sp => new T2()));
+                Assert.IsFalse(_namedRegistrator.TryAdd(default, typeof(T2)));
                 Assert.IsTrue(_namedRegistrator.TryAdd("T3", typeof(T1)));
                 Assert.IsTrue(_namedRegistrator.TryAdd("T4", typeof(T1)));
             });
         }
 
-        [Test]
-        public void DisallowRegisterMultipleTimesWithSameName()
+        [TestCase(null)]
+        [TestCase("Test")]
+        public void DisallowRegisterMultipleTimesWithSameName(string name)
         {
-            _namedRegistrator.Add("Test", typeof(T1));
+            _namedRegistrator.Add(name, typeof(T1));
 
-            Assert.Throws<InvalidOperationException>(() => _namedRegistrator.Add("Test", typeof(T2)));
+            Assert.Throws<InvalidOperationException>(() => _namedRegistrator.Add(name, typeof(T2)));
+        }
+
+        [TestCase(null)]
+        [TestCase("Test")]
+        public void DisallowRegisterFactoryMultipleTimesWithSameName(string name)
+        {
+            _namedRegistrator.Add(name, sp => new T1());
+
+            Assert.Throws<InvalidOperationException>(() => _namedRegistrator.Add(name, sp => new T2()));
+            Assert.Throws<InvalidOperationException>(() => _namedRegistrator.Add(name, typeof(T2)));
         }
 
         [TestCase("Test")]
@@ -70,12 +98,12 @@ namespace NamedResolver.Tests
 
             Assert.IsFalse(_namedRegistrator.TryAdd(name, typeof(T2)));
 
-            var actualRegisteredType = ((IHasRegisteredTypeInfos<ITest>)_namedRegistrator).RegisteredTypes[name];
+            var actualRegisteredType = ((IHasRegisteredTypeInfos<string, ITest>)_namedRegistrator).RegisteredTypes[name];
 
             Assert.AreEqual(expectedRegisteredType, actualRegisteredType);
         }
 
-        [TestCase("")]
+        [TestCase(default(string))]
         [TestCase(null)]
         public void TryAddReturnsFalseWhenRegisterMultipleTimesForDefaultType(string name)
         {
@@ -84,20 +112,20 @@ namespace NamedResolver.Tests
 
             Assert.IsFalse(_namedRegistrator.TryAdd(name, typeof(T2)));
 
-            var actualRegisteredType = ((IHasRegisteredTypeInfos<ITest>)_namedRegistrator).DefaultType;
+            var actualRegisteredType = ((IHasRegisteredTypeInfos<string, ITest>)_namedRegistrator).DefaultType;
 
             Assert.AreEqual(expectedRegisteredType, actualRegisteredType);
         }
 
         [TestCase(null, typeof(T1))]
-        [TestCase("", typeof(T1))]
+        [TestCase(default(string), typeof(T1))]
         public void AllowedNamesForAddDefaultType(string name, Type type)
         {
             Assert.DoesNotThrow(() => _namedRegistrator.Add(name, type));
         }
 
         [TestCase(null, typeof(T1))]
-        [TestCase("", typeof(T1))]
+        [TestCase(default(string), typeof(T1))]
         public void AllowedNamesForTryAddDefaultType(string name, Type type)
         {
             Assert.DoesNotThrow(() => _namedRegistrator.TryAdd(name, type));

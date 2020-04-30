@@ -11,7 +11,7 @@ namespace NamedResolver.Tests
     {
         #region Поля
 
-        private readonly INamedResolver<ITest> _namedResolver;
+        private readonly INamedResolver<string, ITest> _namedResolver;
         private readonly IServiceProvider _serviceProvider;
 
         #endregion Поля
@@ -23,7 +23,7 @@ namespace NamedResolver.Tests
             var services = new ServiceCollection();
 
             services.AddSingleton<DependentClass>();
-            services.AddNamed<ITest>(ServiceLifetime.Singleton)
+            services.AddNamed<string, ITest>(ServiceLifetime.Singleton)
                 .Add<T1>("T1")
                 .Add(typeof(T1), "T1-1")
                 .Add<T2>("T2")
@@ -33,9 +33,9 @@ namespace NamedResolver.Tests
                 .Add<T2>("TTT");
 
             var sp = services.BuildServiceProvider();
-            var registrator = sp.GetRequiredService<INamedRegistrator<ITest>>();
+            var registrator = sp.GetRequiredService<INamedRegistrator<string, ITest>>();
 
-            _namedResolver = new NamedResolver<ITest>(sp, registrator);
+            _namedResolver = new NamedResolver<string, ITest>(sp, registrator);
             _serviceProvider = sp;
         }
 

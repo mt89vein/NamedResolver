@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using NamedResolver.Abstractions;
 using System;
+using System.Collections.Generic;
 
 namespace NamedResolver
 {
@@ -9,7 +10,11 @@ namespace NamedResolver
     /// Конфигуратор именованных типов.
     /// </summary>
     /// <typeparam name="TInterface">Тип интерфейса.</typeparam>
-    internal sealed class NamedRegistratorBuilder<TInterface> : INamedRegistratorBuilder<TInterface>
+    /// <typeparam name="TDiscriminator">
+    /// Тип, по которому можно однозначно определить конкретную реализацию <see cref="TInterface"/>.
+    /// </typeparam>
+    internal sealed class NamedRegistratorBuilder<TDiscriminator, TInterface>
+        : INamedRegistratorBuilder<TDiscriminator, TInterface> 
         where TInterface : class
     {
         #region Поля
@@ -27,25 +32,33 @@ namespace NamedResolver
         /// <summary>
         /// Регистратор именованных типов.
         /// </summary>
-        private readonly INamedRegistrator<TInterface> _namedRegistrator;
+        private readonly INamedRegistrator<TDiscriminator, TInterface> _namedRegistrator;
+
+        /// <summary>
+        /// Механизм сравнения дискриминаторов.
+        /// </summary>
+        private readonly IEqualityComparer<TDiscriminator> _equalityComparer;
 
         #endregion Поля
 
         #region Конструктор
 
         /// <summary>
-        /// Создает экземпляр класса <see cref="NamedRegistratorBuilder{TInterface}" />.
+        /// Создает экземпляр класса <see cref="NamedRegistratorBuilder{TDiscriminator, TInterface}" />.
         /// </summary>
         /// <param name="services">Конфигуратор сервисов.</param>
         /// <param name="namedRegistrator">Регистратор именованных типов.</param>
+        /// <param name="equalityComparer">Механизм сравнения дискриминаторов.</param>
         /// <param name="serviceLifetime">Жизненный цикл типа.</param>
         internal NamedRegistratorBuilder(
             IServiceCollection services,
-            INamedRegistrator<TInterface> namedRegistrator,
+            INamedRegistrator<TDiscriminator, TInterface> namedRegistrator,
+            IEqualityComparer<TDiscriminator> equalityComparer,
             ServiceLifetime serviceLifetime
         )
         {
             _namedRegistrator = namedRegistrator;
+            _equalityComparer = equalityComparer;
             _services = services;
             _serviceLifetime = serviceLifetime;
         }
@@ -66,12 +79,12 @@ namespace NamedResolver
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        public INamedRegistratorBuilder<TInterface> Add(Type type, string name = null)
+        public INamedRegistratorBuilder<TDiscriminator, TInterface> Add(Type type, TDiscriminator name = default)
         {
             _namedRegistrator.Add(name, type);
 
             _services.TryAdd(new ServiceDescriptor(type, type, _serviceLifetime));
-            if (name == null)
+            if (_equalityComparer.Equals(name, default))
             {
                 _services.TryAdd(new ServiceDescriptor(
                     typeof(TInterface),
@@ -92,12 +105,12 @@ namespace NamedResolver
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        public INamedRegistratorBuilder<TInterface> TryAdd(Type type, string name = null)
+        public INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd(Type type, TDiscriminator name = default)
         {
             if (_namedRegistrator.TryAdd(name, type))
             {
                 _services.TryAdd(new ServiceDescriptor(type, type, _serviceLifetime));
-                if (name == null)
+                if (_equalityComparer.Equals(name, default))
                 {
                     _services.TryAdd(new ServiceDescriptor(
                         typeof(TInterface),
@@ -123,12 +136,12 @@ namespace NamedResolver
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        public INamedRegistratorBuilder<TInterface> Add(Type type, Func<IServiceProvider, TInterface> factory, string name = null)
+        public INamedRegistratorBuilder<TDiscriminator, TInterface> Add(Type type, Func<IServiceProvider, TInterface> factory, TDiscriminator name = default)
         {
             _namedRegistrator.Add(name, factory);
 
             _services.TryAdd(new ServiceDescriptor(type, factory, _serviceLifetime));
-            if (name == null)
+            if (_equalityComparer.Equals(name, default))
             {
                 _services.TryAdd(new ServiceDescriptor(
                     typeof(TInterface),
@@ -150,12 +163,12 @@ namespace NamedResolver
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        public INamedRegistratorBuilder<TInterface> TryAdd(Type type, Func<IServiceProvider, TInterface> factory, string name = null)
+        public INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd(Type type, Func<IServiceProvider, TInterface> factory, TDiscriminator name = default)
         {
             if (_namedRegistrator.TryAdd(name, type))
             {
                 _services.TryAdd(new ServiceDescriptor(type, factory, _serviceLifetime));
-                if (name == null)
+                if (_equalityComparer.Equals(name, default))
                 {
                     _services.TryAdd(new ServiceDescriptor(
                         typeof(TInterface),
@@ -180,7 +193,7 @@ namespace NamedResolver
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        public INamedRegistratorBuilder<TInterface> Add<TImplementation>(string name = null)
+        public INamedRegistratorBuilder<TDiscriminator, TInterface> Add<TImplementation>(TDiscriminator name = default)
             where TImplementation : class, TInterface
         {
             return Add(typeof(TImplementation), name);
@@ -195,7 +208,7 @@ namespace NamedResolver
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        public INamedRegistratorBuilder<TInterface> TryAdd<TImplementation>(string name = null)
+        public INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd<TImplementation>(TDiscriminator name = default)
             where TImplementation : class, TInterface
         {
             return TryAdd(typeof(TImplementation), name);
@@ -214,7 +227,7 @@ namespace NamedResolver
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        public INamedRegistratorBuilder<TInterface> Add<TImplementation>(Func<IServiceProvider, TInterface> factory, string name = null)
+        public INamedRegistratorBuilder<TDiscriminator, TInterface> Add<TImplementation>(Func<IServiceProvider, TInterface> factory, TDiscriminator name = default)
             where TImplementation : class, TInterface
         {
             return Add(typeof(TImplementation), factory, name);
@@ -230,7 +243,7 @@ namespace NamedResolver
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        public INamedRegistratorBuilder<TInterface> TryAdd<TImplementation>(Func<IServiceProvider, TInterface> factory, string name = null)
+        public INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd<TImplementation>(Func<IServiceProvider, TInterface> factory, TDiscriminator name = default)
             where TImplementation : class, TInterface
         {
             return TryAdd(typeof(TImplementation), factory, name);

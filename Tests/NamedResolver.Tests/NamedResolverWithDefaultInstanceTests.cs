@@ -11,7 +11,7 @@ namespace NamedResolver.Tests
     {
         #region Поля
 
-        private readonly INamedResolver<ITest> _namedResolver;
+        private readonly INamedResolver<string, ITest> _namedResolver;
         private readonly IServiceProvider _serviceProvider;
 
         #endregion Поля
@@ -23,7 +23,7 @@ namespace NamedResolver.Tests
             var services = new ServiceCollection();
 
             services.AddSingleton<DependentClass>();
-            services.AddNamed<ITest>(ServiceLifetime.Singleton)
+            services.AddNamed<string, ITest>(ServiceLifetime.Singleton)
                 .Add<T2>("T2")
                 .Add<T2>("TTT")
                 .Add(typeof(T2), sp => sp.GetRequiredService<T2>(), "T2-1-Factory")
@@ -31,9 +31,9 @@ namespace NamedResolver.Tests
                 .Add<T1>(); // T1 никак больше не регистрируется, поэтому будет включен в GetAll и GetAllWithNames
 
             var sp = services.BuildServiceProvider();
-            var registrator = sp.GetRequiredService<INamedRegistrator<ITest>>();
+            var registrator = sp.GetRequiredService<INamedRegistrator<string, ITest>>();
 
-            _namedResolver = new NamedResolver<ITest>(sp, registrator);
+            _namedResolver = new NamedResolver<string, ITest>(sp, registrator);
             _serviceProvider = sp;
         }
 
@@ -45,7 +45,7 @@ namespace NamedResolver.Tests
         [TestCase("T2-1-Factory", typeof(T2))]
         [TestCase("T2-1-Generic-Factory", typeof(T2))]
         [TestCase("TTT", typeof(T2))]
-        [TestCase("", typeof(T1))]
+        [TestCase(default(string), typeof(T1))]
         [TestCase(null, typeof(T1))]
         public void CorrectlyResolveByName(string name, Type type)
         {
@@ -114,7 +114,7 @@ namespace NamedResolver.Tests
             {
                 Assert.AreEqual(5, instances.Count);
                 Assert.IsNotNull(defaultInstance);
-                Assert.IsNotNull(name);
+                Assert.IsTrue(name == null || name.Equals(default));
             });
         }
 

@@ -6,7 +6,10 @@ namespace NamedResolver.Abstractions
     /// Интерфейс регистратора именованных типов.
     /// </summary>
     /// <typeparam name="TInterface">Тип интерфейса.</typeparam>
-    public interface INamedRegistrator<TInterface>
+    /// <typeparam name="TDiscriminator">
+    /// Тип, по которому можно однозначно определить конкретную реализацию <see cref="TInterface"/>.
+    /// </typeparam>
+    public interface INamedRegistrator<in TDiscriminator, in TInterface>
         where TInterface : class
     {
         /// <summary>
@@ -21,7 +24,7 @@ namespace NamedResolver.Abstractions
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
         /// <returns>Регистратор именованных типов.</returns>
-        void Add(string name, Type type);
+        void Add(TDiscriminator name, Type type);
 
         /// <summary>
         /// Зарегистрировать фабрику.
@@ -32,7 +35,7 @@ namespace NamedResolver.Abstractions
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
         /// <returns>Регистратор именованных типов.</returns>
-        void Add(string name, Func<IServiceProvider, TInterface> factory);
+        void Add(TDiscriminator name, Func<IServiceProvider, TInterface> factory);
 
         /// <summary>
         /// Попытаться зарегистрировать тип, если еще не зарегистрировано.
@@ -43,7 +46,7 @@ namespace NamedResolver.Abstractions
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Регистратор именованных типов.</returns>
-        bool TryAdd(string name, Type type);
+        bool TryAdd(TDiscriminator name, Type type);
 
         /// <summary>
         /// Попытаться зарегистрировать тип, если еще не зарегистрировано.
@@ -51,6 +54,6 @@ namespace NamedResolver.Abstractions
         /// <param name="name">Имя типа.</param>
         /// <param name="factory">Фабрика типа.</param>
         /// <returns>Регистратор именованных типов.</returns>
-        bool TryAdd(string name, Func<IServiceProvider, TInterface> factory);
+        bool TryAdd(TDiscriminator name, Func<IServiceProvider, TInterface> factory);
     }
 }
