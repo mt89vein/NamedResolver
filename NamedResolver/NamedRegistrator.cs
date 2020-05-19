@@ -19,36 +19,19 @@ namespace NamedResolver
         #region Поля, свойства
 
         /// <summary>
-        /// Словарь зарегистрированных типов.
+        /// Мутабельный словарь зарегистрированных дескрипторов типов.
         /// </summary>
-        private readonly Dictionary<TDiscriminator, Type> _instanceTypes;
+        private readonly Dictionary<TDiscriminator, NamedDescriptor<TDiscriminator, TInterface>> _types;
 
         /// <summary>
-        /// Словарь зарегистрированных фабрик.
+        /// Словарь зарегистрированных дескрипторов типов.
         /// </summary>
-        private readonly Dictionary<TDiscriminator, Func<IServiceProvider, TInterface>> _instanceTypesFactories;
+        public IReadOnlyDictionary<TDiscriminator, NamedDescriptor<TDiscriminator, TInterface>> RegisteredTypes => _types;
 
         /// <summary>
-        /// Словарь зарегистрированных типов.
+        /// Дескриптор по-умолчанию.
         /// </summary>
-        public IReadOnlyDictionary<TDiscriminator, Type> RegisteredTypes =>
-            _instanceTypes;
-
-        /// <summary>
-        /// Словарь зарегистрированных фабрик типов.
-        /// </summary>
-        public IReadOnlyDictionary<TDiscriminator, Func<IServiceProvider, TInterface>> RegisteredTypesFactories =>
-            _instanceTypesFactories;
-
-        /// <summary>
-        /// Тип по-умолчанию.
-        /// </summary>
-        public Type DefaultType { get; private set; }
-
-        /// <summary>
-        /// Фабрика типа по-умолчанию.
-        /// </summary>
-        public Func<IServiceProvider, TInterface> DefaultTypeFactory { get; private set; }
+        public NamedDescriptor<TDiscriminator, TInterface>? DefaultDescriptor { get; private set; }
 
         /// <summary>
         /// Механизм сравнения дискриминаторов.
@@ -66,10 +49,8 @@ namespace NamedResolver
         public NamedRegistrator(IEqualityComparer<TDiscriminator> equalityComparer)
         {
             EqualityComparer = equalityComparer;
-            _instanceTypes = new Dictionary<TDiscriminator, Type>(EqualityComparer);
-            _instanceTypesFactories = new Dictionary<TDiscriminator, Func<IServiceProvider, TInterface>>(
-                EqualityComparer
-            );
+            _types = new Dictionary<TDiscriminator, NamedDescriptor<TDiscriminator, TInterface>>(EqualityComparer);
+            DefaultDescriptor = null;
         }
 
         #endregion Конструктор
@@ -97,24 +78,22 @@ namespace NamedResolver
 
             if (EqualityComparer.Equals(name, default))
             {
-                if (DefaultTypeFactory != null || DefaultType != null)
+                if (DefaultDescriptor.HasValue)
                 {
                     throw new InvalidOperationException("Тип с именем по-умолчанию уже зарегистрирован");
                 }
 
-                DefaultType = type;
+                DefaultDescriptor = new NamedDescriptor<TDiscriminator, TInterface>(default, EqualityComparer, type);
 
                 return;
             }
 
-            if (!_instanceTypesFactories.ContainsKey(name) && !_instanceTypes.ContainsKey(name))
+            if (_types.ContainsKey(name))
             {
-                _instanceTypes.Add(name, type);
-
-                return;
+                throw new InvalidOperationException($"Тип с именем {name} уже зарегистрирован");
             }
 
-            throw new InvalidOperationException($"Тип с именем {name} уже зарегистрирован");
+            _types.Add(name, new NamedDescriptor<TDiscriminator, TInterface>(name, EqualityComparer, type));
         }
 
         /// <summary>
@@ -130,24 +109,22 @@ namespace NamedResolver
         {
             if (EqualityComparer.Equals(name, default))
             {
-                if (DefaultTypeFactory != null || DefaultType != null)
+                if (DefaultDescriptor.HasValue)
                 {
                     throw new InvalidOperationException("Тип с именем по-умолчанию уже зарегистрирован");
                 }
 
-                DefaultTypeFactory = factory;
+                DefaultDescriptor = new NamedDescriptor<TDiscriminator, TInterface>(default, EqualityComparer, typeFactory: factory);
 
                 return;
             }
 
-            if (!_instanceTypesFactories.ContainsKey(name) && !_instanceTypes.ContainsKey(name))
+            if (_types.ContainsKey(name))
             {
-                _instanceTypesFactories.Add(name, factory);
-
-                return;
+                throw new InvalidOperationException($"Тип с именем {name} уже зарегистрирован");
             }
 
-            throw new InvalidOperationException($"Тип с именем {name} уже зарегистрирован");
+            _types.Add(name, new NamedDescriptor<TDiscriminator, TInterface>(name, EqualityComparer, typeFactory: factory));
         }
 
         /// <summary>
@@ -160,24 +137,24 @@ namespace NamedResolver
         {
             if (EqualityComparer.Equals(name, default))
             {
-                if (DefaultType == null && DefaultTypeFactory == null)
+                if (DefaultDescriptor.HasValue)
                 {
-                    DefaultTypeFactory = factory;
-
-                    return true;
+                    return false;
                 }
 
-                return false;
-            }
-
-            if (!_instanceTypes.ContainsKey(name) && !_instanceTypesFactories.ContainsKey(name))
-            {
-                _instanceTypesFactories.Add(name, factory);
+                DefaultDescriptor = new NamedDescriptor<TDiscriminator, TInterface>(default, EqualityComparer, typeFactory: factory);
 
                 return true;
             }
 
-            return false;
+            if (_types.ContainsKey(name))
+            {
+                return false;
+            }
+
+            _types.Add(name, new NamedDescriptor<TDiscriminator, TInterface>(name, EqualityComparer, typeFactory: factory));
+
+            return true;
         }
 
         /// <summary>
@@ -198,24 +175,24 @@ namespace NamedResolver
 
             if (EqualityComparer.Equals(name, default))
             {
-                if (DefaultType == null && DefaultTypeFactory == null)
+                if (DefaultDescriptor.HasValue)
                 {
-                    DefaultType = type;
-
-                    return true;
+                    return false;
                 }
 
-                return false;
-            }
-
-            if (!_instanceTypes.ContainsKey(name) && !_instanceTypesFactories.ContainsKey(name))
-            {
-                _instanceTypes.Add(name, type);
+                DefaultDescriptor = new NamedDescriptor<TDiscriminator, TInterface>(default, EqualityComparer, type);
 
                 return true;
             }
 
-            return false;
+            if (_types.ContainsKey(name))
+            {
+                return false;
+            }
+
+            _types.Add(name, new NamedDescriptor<TDiscriminator, TInterface>(name, EqualityComparer, type));
+
+            return true;
         }
 
         #endregion Методы (public)

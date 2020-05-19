@@ -100,7 +100,7 @@ namespace NamedResolver.Tests
 
             var actualRegisteredType = ((IHasRegisteredTypeInfos<string, ITest>)_namedRegistrator).RegisteredTypes[name];
 
-            Assert.AreEqual(expectedRegisteredType, actualRegisteredType);
+            Assert.AreEqual(expectedRegisteredType, actualRegisteredType.Type);
         }
 
         [TestCase(default(string))]
@@ -112,9 +112,9 @@ namespace NamedResolver.Tests
 
             Assert.IsFalse(_namedRegistrator.TryAdd(name, typeof(T2)));
 
-            var actualRegisteredType = ((IHasRegisteredTypeInfos<string, ITest>)_namedRegistrator).DefaultType;
+            var actualRegisteredType = ((IHasRegisteredTypeInfos<string, ITest>)_namedRegistrator).DefaultDescriptor;
 
-            Assert.AreEqual(expectedRegisteredType, actualRegisteredType);
+            Assert.AreEqual(expectedRegisteredType, actualRegisteredType.Value.Type);
         }
 
         [TestCase(null, typeof(T1))]

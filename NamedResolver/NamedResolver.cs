@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using NamedResolver.Abstractions;
+﻿using NamedResolver.Abstractions;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace NamedResolver
 {
@@ -27,22 +25,12 @@ namespace NamedResolver
         /// <summary>
         /// Список зарегистрированных типов.
         /// </summary>
-        private readonly IReadOnlyDictionary<TDiscriminator, Type> _instanceTypes;
+        private readonly IReadOnlyDictionary<TDiscriminator, NamedDescriptor<TDiscriminator, TInterface>> _registeredDescriptors;
 
         /// <summary>
-        /// Список зарегистрированных фабрик типов.
+        /// Дефолтный дескриптор.
         /// </summary>
-        private readonly IReadOnlyDictionary<TDiscriminator, Func<IServiceProvider, TInterface>> _instanceTypeFactories;
-
-        /// <summary>
-        /// Тип по-умолчанию.
-        /// </summary>
-        private readonly Type _defaultType;
-
-        /// <summary>
-        /// Фабрика типа по-умолчанию.
-        /// </summary>
-        private readonly Func<IServiceProvider, TInterface> _defaultTypeFactory;
+        private readonly NamedDescriptor<TDiscriminator, TInterface>? _defaultDescriptor;
 
         /// <summary>
         /// Механизм сравнения дискриминаторов.
@@ -76,10 +64,8 @@ namespace NamedResolver
         {
             _serviceProvider = serviceProvider;
             var registeredTypesAccessor = (IHasRegisteredTypeInfos<TDiscriminator, TInterface>) namedRegistrator;
-            _instanceTypes = registeredTypesAccessor.RegisteredTypes;
-            _defaultType = registeredTypesAccessor.DefaultType;
-            _instanceTypeFactories = registeredTypesAccessor.RegisteredTypesFactories;
-            _defaultTypeFactory = registeredTypesAccessor.DefaultTypeFactory;
+            _registeredDescriptors = registeredTypesAccessor.RegisteredTypes;
+            _defaultDescriptor = registeredTypesAccessor.DefaultDescriptor;
             _equalityComparer = registeredTypesAccessor.EqualityComparer;
         }
 
@@ -126,30 +112,12 @@ namespace NamedResolver
         {
             if (_equalityComparer.Equals(name, default))
             {
-                if (_defaultType != null)
-                {
-                    return Resolve(_defaultType);
-                }
-
-                if (_defaultTypeFactory != null)
-                {
-                    return Resolve(_defaultTypeFactory);
-                }
-
-                return default;
+                return _defaultDescriptor?.Resolve(_serviceProvider);
             }
 
-            if (_instanceTypes.TryGetValue(name, out var type))
-            {
-                return Resolve(type);
-            }
-
-            if (_instanceTypeFactories.TryGetValue(name, out var factory))
-            {
-                return Resolve(factory);
-            }
-
-            return default;
+            return _registeredDescriptors.TryGetValue(name, out var namedDescriptor)
+                ? namedDescriptor.Resolve(_serviceProvider)
+                : default;
         }
 
         /// <summary>
@@ -163,36 +131,24 @@ namespace NamedResolver
         /// <returns>true, если удалось получить инстанс, false в противном случае.</returns>
         public bool TryGet(out TInterface instance, TDiscriminator name = default)
         {
-            instance = default;
-
             if (_equalityComparer.Equals(name, default))
             {
-                if (_defaultType != null)
+                if (_defaultDescriptor != null)
                 {
-                    instance = ResolveSafe(_defaultType);
+                    return _defaultDescriptor.Value.TryResolve(_serviceProvider, out instance);
                 }
 
-                if (_defaultTypeFactory != null)
-                {
-                    instance = ResolveSafe(_defaultTypeFactory);
-                }
+                instance = default;
 
-                return instance != null;
+                return false;
             }
 
-            if (_instanceTypes.TryGetValue(name, out var type))
+            if (_registeredDescriptors.TryGetValue(name, out var namedDescriptor))
             {
-                instance = ResolveSafe(type);
-
-                return instance != null;
+                return namedDescriptor.TryResolve(_serviceProvider, out instance);
             }
 
-            if (_instanceTypeFactories.TryGetValue(name, out var factory))
-            {
-                instance = ResolveSafe(factory);
-
-                return instance != null;
-            }
+            instance = default;
 
             return false;
         }
@@ -206,42 +162,33 @@ namespace NamedResolver
         /// <returns>Список инстансов.</returns>
         public IReadOnlyList<TInterface> GetAll(Func<Type, bool> predicate = null)
         {
-            var res = new List<TInterface>();
-            foreach (var type in _instanceTypes.Select(t => t.Value))
+            var instances = new List<TInterface>();
+
+            foreach (var descriptor in _registeredDescriptors.Values)
             {
-                if (predicate == null || predicate(type))
+                if (predicate == null)
                 {
-                    res.Add(Resolve(type));
+                    instances.Add(descriptor.Resolve(_serviceProvider));
+                }
+                else if (descriptor.TryResolveIfSatisfiedBy(_serviceProvider, predicate, out var resolvedInstance))
+                {
+                    instances.Add(resolvedInstance);
                 }
             }
 
-            foreach (var factory in _instanceTypeFactories.Select(t => t.Value))
+            if (_defaultDescriptor != null)
             {
-                var resolvedTypeInstance = Resolve(factory);
-                if (predicate == null || predicate(resolvedTypeInstance.GetType()))
+                if (predicate == null)
                 {
-                    res.Add(resolvedTypeInstance);
+                    instances.Add(_defaultDescriptor.Value.Resolve(_serviceProvider));
+                }
+                else if (_defaultDescriptor.Value.TryResolveIfSatisfiedBy(_serviceProvider, predicate, out var resolvedInstance))
+                {
+                    instances.Add(resolvedInstance);
                 }
             }
 
-            if (_defaultType != null)
-            {
-                if (predicate == null || predicate(_defaultType))
-                {
-                    res.Add(Resolve(_defaultType));
-                }
-            }
-
-            if (_defaultTypeFactory != null)
-            {
-                var resolvedTypeInstance = Resolve(_defaultTypeFactory);
-                if (predicate == null || predicate(resolvedTypeInstance.GetType()))
-                {
-                    res.Add(resolvedTypeInstance);
-                }
-            }
-
-            return res;
+            return instances;
         }
 
         /// <summary>
@@ -253,95 +200,35 @@ namespace NamedResolver
         /// <returns>Список (имя типа, инстанс)</returns> 
         public IReadOnlyList<(TDiscriminator name, TInterface instance)> GetAllWithNames(Func<TDiscriminator, Type, bool> predicate = null)
         {
-            var res = new List<(TDiscriminator, TInterface)>();
+            var instances = new List<(TDiscriminator, TInterface)>();
 
-            foreach (var type in _instanceTypes)
+            foreach (var keyValuePair in _registeredDescriptors)
             {
-                if (predicate == null || predicate(type.Key, type.Value))
+                if (predicate == null)
                 {
-                    res.Add((type.Key, Resolve(type.Value)));
+                    instances.Add((keyValuePair.Key, keyValuePair.Value.Resolve(_serviceProvider)));
+                }
+                else if (keyValuePair.Value.TryResolveIfSatisfiedBy(_serviceProvider, predicate, out var resolvedInstance))
+                {
+                    instances.Add((keyValuePair.Key, resolvedInstance));
                 }
             }
 
-            foreach (var typeFactory in _instanceTypeFactories)
+            if (_defaultDescriptor != null)
             {
-                var resolvedTypeInstance = Resolve(typeFactory.Value);
-                if (predicate == null || predicate(typeFactory.Key, resolvedTypeInstance.GetType()))
+                if (predicate == null)
                 {
-                    res.Add((typeFactory.Key, resolvedTypeInstance));
+                    instances.Add((default, _defaultDescriptor.Value.Resolve(_serviceProvider)));
+                }
+                else if (_defaultDescriptor.Value.TryResolveIfSatisfiedBy(_serviceProvider, predicate, out var resolvedInstance))
+                {
+                    instances.Add((default, resolvedInstance));
                 }
             }
 
-            if (_defaultType != null)
-            {
-                if (predicate == null || predicate(default, _defaultType))
-                {
-                    res.Add((default, Resolve(_defaultType)));
-                }
-            }
-
-            if (_defaultTypeFactory != null)
-            {
-                var resolvedTypeInstance = Resolve(_defaultTypeFactory);
-                if (predicate == null || predicate(default, resolvedTypeInstance.GetType()))
-                {
-                    res.Add((default, resolvedTypeInstance));
-                }
-            }
-
-            return res;
+            return instances;
         }
 
         #endregion Методы (public)
-
-        #region Методы (private)
-
-        /// <summary>
-        /// Получить инстанс из провайдера служб.
-        /// </summary>
-        /// <param name="type">Тип.</param>
-        /// <exception cref="InvalidOperationException">
-        /// Если не удалось получить инстанс из провайдера служб.
-        /// </exception>
-        /// <returns>Инстанс.</returns>
-        private TInterface Resolve(Type type)
-        {
-            return _serviceProvider.GetRequiredService(type) as TInterface;
-        }
-
-        /// <summary>
-        /// Получить инстанс из провайдера служб.
-        /// </summary>
-        /// <param name="factory">Фабрика типа.</param>
-        /// <exception cref="InvalidOperationException">
-        /// Если не удалось получить инстанс из провайдера служб.
-        /// </exception>
-        /// <returns>Инстанс.</returns>
-        private TInterface Resolve(Func<IServiceProvider, TInterface> factory)
-        {
-            return factory(_serviceProvider);
-        }
-
-        /// <summary>
-        /// Получить инстанс из провайдера служб.
-        /// </summary>
-        /// <param name="type">Тип.</param>
-        /// <returns>Инстанс.</returns>
-        private TInterface ResolveSafe(Type type)
-        {
-            return _serviceProvider.GetService(type) as TInterface;
-        }
-
-        /// <summary>
-        /// Получить инстанс из провайдера служб.
-        /// </summary>
-        /// <param name="factory">Фабрика типа.</param>
-        /// <returns>Инстанс.</returns>
-        private TInterface ResolveSafe(Func<IServiceProvider, TInterface> factory)
-        {
-            return factory(_serviceProvider);
-        }
-
-        #endregion Методы (private)
     }
 }

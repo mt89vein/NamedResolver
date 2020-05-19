@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace NamedResolver.Abstractions
 {
@@ -7,26 +6,17 @@ namespace NamedResolver.Abstractions
     /// Интерфейс для получения информации о зарегистрированных типов.
     /// </summary>
     internal interface IHasRegisteredTypeInfos<TDiscriminator, TInterface>
+        where TInterface : class
     {
         /// <summary>
-        /// Словарь зарегистрированных типов.
+        /// Словарь зарегистрированных дескрипторов типов.
         /// </summary>
-        IReadOnlyDictionary<TDiscriminator, Type> RegisteredTypes { get; }
+        IReadOnlyDictionary<TDiscriminator, NamedDescriptor<TDiscriminator, TInterface>> RegisteredTypes { get; }
 
         /// <summary>
-        /// Словарь зарегистрированных фабрик типов.
+        /// Дефолтный тип.
         /// </summary>
-        IReadOnlyDictionary<TDiscriminator, Func<IServiceProvider, TInterface>> RegisteredTypesFactories { get; }
-
-        /// <summary>
-        /// Тип зарегистрированный по-умолчанию.
-        /// </summary>
-        Type DefaultType { get; }
-
-        /// <summary>
-        /// Фабрика типа по-умолчанию.
-        /// </summary>
-        Func<IServiceProvider, TInterface> DefaultTypeFactory { get; }
+        NamedDescriptor<TDiscriminator, TInterface>? DefaultDescriptor { get; }
 
         /// <summary>
         /// Механизм сравнения дискриминаторов.
