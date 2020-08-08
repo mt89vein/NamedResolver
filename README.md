@@ -1,7 +1,7 @@
 NamedResolver
 =============
 
-An abstraction that provide ability to use interface with multiple implementations or preconfigured instances in easy way using local ServiceLocator pattern.
+An abstraction that provide ability to use interface with multiple implementations or preconfigured instances in easy way. Drop in replacement for simple switch case factories.
 
 [![NuGet version (NamedResolver)](https://img.shields.io/nuget/v/NamedResolver.svg?style=flat-square)](https://www.nuget.org/packages/NamedResolver)
 ![UnitTest](https://github.com/mt89vein/NamedResolver/workflows/UnitTest/badge.svg)
