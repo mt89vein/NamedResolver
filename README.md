@@ -5,9 +5,7 @@ An abstraction that provide ability to use interface with multiple implementatio
 
 [![NuGet version (NamedResolver)](https://img.shields.io/nuget/v/NamedResolver.svg?style=flat-square)](https://www.nuget.org/packages/NamedResolver)
 ![UnitTest](https://github.com/mt89vein/NamedResolver/workflows/UnitTest/badge.svg)
-
-
-All code covered with unit test by 100%.
+[![Coverage Status](https://coveralls.io/repos/github/mt89vein/NamedResolver/badge.svg?branch=master)](https://coveralls.io/github/mt89vein/NamedResolver?branch=master)
 
 Look at tests for additional examples.
 
