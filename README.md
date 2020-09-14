@@ -13,11 +13,15 @@ Look at tests for additional examples.
 
 You should install [NamedResolver with NuGet](https://www.nuget.org/packages/NamedResolver):
 
-    Install-Package NamedResolver
+    Install-Package NamedResolver -Version 2.1.0
     
-Or via the .NET Core command line interface:
+via the .NET Core command line interface:
 
-    dotnet add package NamedResolver
+    dotnet add package NamedResolver --version 2.1.0
+    
+or package reference
+
+    <PackageReference Include="NamedResolver" Version="2.1.0" />
     
 ## Use cases
 
