@@ -35,7 +35,7 @@ namespace NamedResolver
         /// <summary>
         /// Механизм сравнения дискриминаторов.
         /// </summary>
-        private readonly IEqualityComparer<TDiscriminator> _equalityComparer;
+        private readonly IEqualityComparer<TDiscriminator?> _equalityComparer;
 
         #endregion Поля
 
@@ -49,7 +49,7 @@ namespace NamedResolver
         /// Если не удалось получить инстанс из провайдера служб.
         /// </exception>
         /// <returns>Инстанс, или default если реализация не зарегистрирована.</returns>
-        public TInterface this[TDiscriminator name] => Get(name);
+        public TInterface? this[TDiscriminator? name] => Get(name);
 
         #endregion Индексаторы
 
@@ -81,7 +81,7 @@ namespace NamedResolver
         /// Если не удалось получить инстанс из провайдера служб.
         /// </exception>
         /// <returns>Инстанс.</returns>
-        public TInterface GetRequired(TDiscriminator name = default)
+        public TInterface GetRequired(TDiscriminator? name = default)
         {
             if (!TryGet(out var instance, name))
             {
@@ -95,7 +95,7 @@ namespace NamedResolver
                 }
             }
 
-            return instance;
+            return instance!;
         }
 
         /// <summary>
@@ -108,14 +108,14 @@ namespace NamedResolver
         /// т.к. вероятно была перерегистрация или очистка после настройки.
         /// </exception>
         /// <returns>Инстанс, или default если реализация не зарегистрирована.</returns>
-        public TInterface Get(TDiscriminator name = default)
+        public TInterface? Get(TDiscriminator? name = default)
         {
             if (_equalityComparer.Equals(name, default))
             {
                 return _defaultDescriptor?.Resolve(_serviceProvider);
             }
 
-            return _registeredDescriptors.TryGetValue(name, out var namedDescriptor)
+            return _registeredDescriptors.TryGetValue(name!, out var namedDescriptor)
                 ? namedDescriptor.Resolve(_serviceProvider)
                 : default;
         }
@@ -129,7 +129,7 @@ namespace NamedResolver
         /// Если не удалось получить инстанс из провайдера служб.
         /// </exception>
         /// <returns>true, если удалось получить инстанс, false в противном случае.</returns>
-        public bool TryGet(out TInterface instance, TDiscriminator name = default)
+        public bool TryGet(out TInterface? instance, TDiscriminator? name = default)
         {
             if (_equalityComparer.Equals(name, default))
             {
@@ -143,7 +143,7 @@ namespace NamedResolver
                 return false;
             }
 
-            if (_registeredDescriptors.TryGetValue(name, out var namedDescriptor))
+            if (_registeredDescriptors.TryGetValue(name!, out var namedDescriptor))
             {
                 return namedDescriptor.TryResolve(_serviceProvider, out instance);
             }
@@ -160,7 +160,7 @@ namespace NamedResolver
         /// Если не удалось получить инстанс из провайдера служб.
         /// </exception>
         /// <returns>Список инстансов.</returns>
-        public IReadOnlyList<TInterface> GetAll(Func<Type, bool> predicate = null)
+        public IReadOnlyList<TInterface> GetAll(Func<Type, bool>? predicate = null)
         {
             var instances = new List<TInterface>();
 
@@ -172,7 +172,7 @@ namespace NamedResolver
                 }
                 else if (descriptor.TryResolveIfSatisfiedBy(_serviceProvider, predicate, out var resolvedInstance))
                 {
-                    instances.Add(resolvedInstance);
+                    instances.Add(resolvedInstance!);
                 }
             }
 
@@ -184,7 +184,7 @@ namespace NamedResolver
                 }
                 else if (_defaultDescriptor.Value.TryResolveIfSatisfiedBy(_serviceProvider, predicate, out var resolvedInstance))
                 {
-                    instances.Add(resolvedInstance);
+                    instances.Add(resolvedInstance!);
                 }
             }
 
@@ -197,10 +197,10 @@ namespace NamedResolver
         /// <exception cref="InvalidOperationException">
         /// Если не удалось получить инстанс из провайдера служб.
         /// </exception>
-        /// <returns>Список (имя типа, инстанс)</returns> 
-        public IReadOnlyList<(TDiscriminator name, TInterface instance)> GetAllWithNames(Func<TDiscriminator, Type, bool> predicate = null)
+        /// <returns>Список (имя типа, инстанс)</returns>
+        public IReadOnlyList<(TDiscriminator? name, TInterface instance)> GetAllWithNames(Func<TDiscriminator, Type, bool>? predicate = null)
         {
-            var instances = new List<(TDiscriminator, TInterface)>();
+            var instances = new List<(TDiscriminator?, TInterface)>();
 
             foreach (var keyValuePair in _registeredDescriptors)
             {
@@ -208,9 +208,9 @@ namespace NamedResolver
                 {
                     instances.Add((keyValuePair.Key, keyValuePair.Value.Resolve(_serviceProvider)));
                 }
-                else if (keyValuePair.Value.TryResolveIfSatisfiedBy(_serviceProvider, predicate, out var resolvedInstance))
+                else if (keyValuePair.Value.TryResolveIfSatisfiedBy(_serviceProvider, predicate!, out var resolvedInstance))
                 {
-                    instances.Add((keyValuePair.Key, resolvedInstance));
+                    instances.Add((keyValuePair.Key, resolvedInstance!));
                 }
             }
 
@@ -220,9 +220,9 @@ namespace NamedResolver
                 {
                     instances.Add((default, _defaultDescriptor.Value.Resolve(_serviceProvider)));
                 }
-                else if (_defaultDescriptor.Value.TryResolveIfSatisfiedBy(_serviceProvider, predicate, out var resolvedInstance))
+                else if (_defaultDescriptor.Value.TryResolveIfSatisfiedBy(_serviceProvider, predicate!, out var resolvedInstance))
                 {
-                    instances.Add((default, resolvedInstance));
+                    instances.Add((default, resolvedInstance!));
                 }
             }
 

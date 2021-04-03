@@ -23,12 +23,12 @@ namespace NamedResolver
         public static INamedRegistratorBuilder<TDiscriminator, TInterface> AddNamed<TDiscriminator, TInterface>(
             this IServiceCollection services,
             ServiceLifetime serviceLifetime = ServiceLifetime.Scoped,
-            IEqualityComparer<TDiscriminator> equalityComparer = null
+            IEqualityComparer<TDiscriminator>? equalityComparer = null
         )   where TInterface : class
         {
             var comparer = equalityComparer ?? EqualityComparer<TDiscriminator>.Default;
-            var registrator = new NamedRegistrator<TDiscriminator, TInterface>(comparer);
-            var builder = new NamedRegistratorBuilder<TDiscriminator, TInterface>(services, registrator, comparer, serviceLifetime);
+            var registrator = new NamedRegistrator<TDiscriminator, TInterface>(comparer!);
+            var builder = new NamedRegistratorBuilder<TDiscriminator, TInterface>(services, registrator, comparer!, serviceLifetime);
 
             services.AddSingleton<INamedRegistrator<TDiscriminator, TInterface>>(registrator);
 

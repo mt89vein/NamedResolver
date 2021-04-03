@@ -19,5 +19,5 @@ namespace NamedResolver
     /// т.к. вероятно была перерегистрация или очистка после настройки.
     /// </exception>
     /// <returns>Инстанс, или default если реализация не зарегистрирована.</returns>
-    public delegate TInterface ResolveNamed<in TDiscriminator, out TInterface>(TDiscriminator name = default);
+    public delegate TInterface? ResolveNamed<in TDiscriminator, out TInterface>(TDiscriminator? name = default);
 }

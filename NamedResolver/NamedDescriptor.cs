@@ -18,7 +18,7 @@ namespace NamedResolver
         /// <summary>
         /// Механизм сравнения дискриминатора.
         /// </summary>
-        private readonly IEqualityComparer<TDiscriminator> _equalityComparer;
+        private readonly IEqualityComparer<TDiscriminator?>? _equalityComparer;
 
         #endregion Поля
 
@@ -27,17 +27,17 @@ namespace NamedResolver
         /// <summary>
         /// Дискриминатор.
         /// </summary>
-        public TDiscriminator Discriminator { get; }
+        public TDiscriminator? Discriminator { get; }
 
         /// <summary>
         /// Тип.
         /// </summary>
-        public Type Type { get; }
+        public Type? Type { get; }
 
         /// <summary>
         /// Фабрика типа.
         /// </summary>
-        public Func<IServiceProvider, TInterface> TypeFactory { get; }
+        public Func<IServiceProvider, TInterface>? TypeFactory { get; }
 
         #endregion Свойства
 
@@ -47,13 +47,13 @@ namespace NamedResolver
         /// Создает новый экземпляр структуры <seealso cref="NamedDescriptor{TDiscriminator,TInterface}"/>.
         /// </summary>
         public NamedDescriptor(
-            TDiscriminator discriminator,
-            IEqualityComparer<TDiscriminator> equalityComparer = default,
-            Type type = default,
-            Func<IServiceProvider, TInterface> typeFactory = default
+            TDiscriminator? discriminator,
+            IEqualityComparer<TDiscriminator?>? equalityComparer = default,
+            Type? type = default,
+            Func<IServiceProvider, TInterface>? typeFactory = default
         )
         {
-            _equalityComparer = equalityComparer ?? EqualityComparer<TDiscriminator>.Default;
+            _equalityComparer = equalityComparer ?? EqualityComparer<TDiscriminator?>.Default;
             Discriminator = discriminator;
             Type = type;
             TypeFactory = typeFactory;
@@ -75,7 +75,7 @@ namespace NamedResolver
         {
             var instance = Type != null
                 ? (TInterface) serviceProvider.GetRequiredService(Type)
-                : TypeFactory(serviceProvider);
+                : TypeFactory!(serviceProvider);
 
             return instance ??
                    throw new InvalidOperationException(
@@ -88,11 +88,11 @@ namespace NamedResolver
         /// </summary>
         /// <param name="serviceProvider">Провайдер служб.</param>
         /// <param name="instance">Инстанс.</param>
-        public bool TryResolve(IServiceProvider serviceProvider, out TInterface instance)
+        public bool TryResolve(IServiceProvider serviceProvider, out TInterface? instance)
         {
             instance = Type != null
                 ? (TInterface) serviceProvider.GetService(Type)
-                : TypeFactory(serviceProvider);
+                : TypeFactory!(serviceProvider);
 
             return instance != null;
         }
@@ -114,7 +114,7 @@ namespace NamedResolver
         public bool TryResolveIfSatisfiedBy(
             IServiceProvider serviceProvider,
             Func<Type, bool> predicate,
-            out TInterface instance
+            out TInterface? instance
         )
         {
             if (Type != null)
@@ -159,8 +159,8 @@ namespace NamedResolver
         /// </remarks>
         public bool TryResolveIfSatisfiedBy(
             IServiceProvider serviceProvider,
-            Func<TDiscriminator, Type, bool> predicate,
-            out TInterface instance
+            Func<TDiscriminator?, Type, bool> predicate,
+            out TInterface? instance
         )
         {
             if (Type != null)
@@ -199,7 +199,7 @@ namespace NamedResolver
         /// <see langword="true" /> if the current object is equal to the <paramref name="other" /> parameter; otherwise, <see langword="false" />.</returns>
         public bool Equals(NamedDescriptor<TDiscriminator, TInterface> other)
         {
-            return (_equalityComparer ?? EqualityComparer<TDiscriminator>.Default).Equals(Discriminator, other.Discriminator);
+            return (_equalityComparer ?? EqualityComparer<TDiscriminator?>.Default).Equals(Discriminator, other.Discriminator);
         }
 
         /// <summary>Indicates whether this instance and a specified object are equal.</summary>
@@ -215,7 +215,7 @@ namespace NamedResolver
         /// <returns>A 32-bit signed integer that is the hash code for this instance.</returns>
         public override int GetHashCode()
         {
-            return (_equalityComparer ?? EqualityComparer<TDiscriminator>.Default).GetHashCode(Discriminator);
+            return (_equalityComparer ?? EqualityComparer<TDiscriminator?>.Default).GetHashCode(Discriminator);
         }
 
         /// <summary>Returns a value that indicates whether the values of two <see cref="T:NamedResolver.NamedDescriptor`2" /> objects are equal.</summary>

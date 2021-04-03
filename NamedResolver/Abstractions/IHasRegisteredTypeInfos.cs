@@ -21,6 +21,6 @@ namespace NamedResolver.Abstractions
         /// <summary>
         /// Механизм сравнения дискриминаторов.
         /// </summary>
-        IEqualityComparer<TDiscriminator> EqualityComparer { get; }
+        IEqualityComparer<TDiscriminator?> EqualityComparer { get; }
     }
 }

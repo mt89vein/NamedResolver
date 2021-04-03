@@ -36,7 +36,7 @@ namespace NamedResolver
         /// <summary>
         /// Механизм сравнения дискриминаторов.
         /// </summary>
-        public IEqualityComparer<TDiscriminator> EqualityComparer { get; }
+        public IEqualityComparer<TDiscriminator?> EqualityComparer { get; }
 
         #endregion Поля, свойства
 
@@ -46,7 +46,7 @@ namespace NamedResolver
         /// Создает экземпляр класса <see cref="NamedRegistrator{TDiscriminator,TInterface}"/>.
         /// </summary>
         /// <param name="equalityComparer">Механизм сравнения дискриминаторов.</param>
-        public NamedRegistrator(IEqualityComparer<TDiscriminator> equalityComparer)
+        public NamedRegistrator(IEqualityComparer<TDiscriminator?> equalityComparer)
         {
             EqualityComparer = equalityComparer;
             _types = new Dictionary<TDiscriminator, NamedDescriptor<TDiscriminator, TInterface>>(EqualityComparer);
@@ -69,7 +69,7 @@ namespace NamedResolver
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
         /// <returns>Регистратор именованных типов.</returns>
-        public void Add(TDiscriminator name, Type type)
+        public void Add(TDiscriminator? name, Type type)
         {
             if (!typeof(TInterface).IsAssignableFrom(type))
             {
@@ -88,12 +88,12 @@ namespace NamedResolver
                 return;
             }
 
-            if (_types.ContainsKey(name))
+            if (_types.ContainsKey(name!))
             {
                 throw new InvalidOperationException($"Тип с именем {name} уже зарегистрирован");
             }
 
-            _types.Add(name, new NamedDescriptor<TDiscriminator, TInterface>(name, EqualityComparer, type));
+            _types.Add(name!, new NamedDescriptor<TDiscriminator, TInterface>(name, EqualityComparer, type));
         }
 
         /// <summary>
@@ -105,7 +105,7 @@ namespace NamedResolver
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
         /// <returns>Регистратор именованных типов.</returns>
-        public void Add(TDiscriminator name, Func<IServiceProvider, TInterface> factory)
+        public void Add(TDiscriminator? name, Func<IServiceProvider, TInterface> factory)
         {
             if (EqualityComparer.Equals(name, default))
             {
@@ -119,12 +119,12 @@ namespace NamedResolver
                 return;
             }
 
-            if (_types.ContainsKey(name))
+            if (_types.ContainsKey(name!))
             {
                 throw new InvalidOperationException($"Тип с именем {name} уже зарегистрирован");
             }
 
-            _types.Add(name, new NamedDescriptor<TDiscriminator, TInterface>(name, EqualityComparer, typeFactory: factory));
+            _types.Add(name!, new NamedDescriptor<TDiscriminator, TInterface>(name, EqualityComparer, typeFactory: factory));
         }
 
         /// <summary>
@@ -133,7 +133,7 @@ namespace NamedResolver
         /// <param name="name">Имя типа.</param>
         /// <param name="factory">Фабрика типа.</param>
         /// <returns>Регистратор именованных типов.</returns>
-        public bool TryAdd(TDiscriminator name, Func<IServiceProvider, TInterface> factory)
+        public bool TryAdd(TDiscriminator? name, Func<IServiceProvider, TInterface> factory)
         {
             if (EqualityComparer.Equals(name, default))
             {
@@ -147,12 +147,12 @@ namespace NamedResolver
                 return true;
             }
 
-            if (_types.ContainsKey(name))
+            if (_types.ContainsKey(name!))
             {
                 return false;
             }
 
-            _types.Add(name, new NamedDescriptor<TDiscriminator, TInterface>(name, EqualityComparer, typeFactory: factory));
+            _types.Add(name!, new NamedDescriptor<TDiscriminator, TInterface>(name, EqualityComparer, typeFactory: factory));
 
             return true;
         }
@@ -166,7 +166,7 @@ namespace NamedResolver
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Регистратор именованных типов.</returns>
-        public bool TryAdd(TDiscriminator name, Type type)
+        public bool TryAdd(TDiscriminator? name, Type type)
         {
             if (!typeof(TInterface).IsAssignableFrom(type))
             {
@@ -185,12 +185,12 @@ namespace NamedResolver
                 return true;
             }
 
-            if (_types.ContainsKey(name))
+            if (_types.ContainsKey(name!))
             {
                 return false;
             }
 
-            _types.Add(name, new NamedDescriptor<TDiscriminator, TInterface>(name, EqualityComparer, type));
+            _types.Add(name!, new NamedDescriptor<TDiscriminator, TInterface>(name, EqualityComparer, type));
 
             return true;
         }

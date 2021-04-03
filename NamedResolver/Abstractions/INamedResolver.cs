@@ -17,7 +17,7 @@ namespace NamedResolver.Abstractions
         /// </summary>
         /// <param name="name">Имя типа.</param>
         /// <returns>Инстанс, или default если реализация не зарегистрирована.</returns>
-        TInterface this[TDiscriminator name] { get; }
+        TInterface? this[TDiscriminator? name] { get; }
 
         /// <summary>
         /// Получить реализацию по-дискриминатору.
@@ -27,7 +27,7 @@ namespace NamedResolver.Abstractions
         /// Если не удалось получить инстанс из провайдера служб.
         /// </exception>
         /// <returns>Инстанс.</returns>
-        TInterface GetRequired(TDiscriminator name = default);
+        TInterface GetRequired(TDiscriminator? name = default);
 
         /// <summary>
         /// Получить реализацию по дискриминатору.
@@ -41,7 +41,7 @@ namespace NamedResolver.Abstractions
         /// <returns>
         /// Инстанс, или default если реализация не зарегистрирована.
         /// </returns>
-        TInterface Get(TDiscriminator name = default);
+        TInterface? Get(TDiscriminator? name = default);
 
         /// <summary>
         /// Попытаться получить реализацию по дискриминатору.
@@ -49,7 +49,7 @@ namespace NamedResolver.Abstractions
         /// <param name="instance">Инстанс.</param>
         /// <param name="name">Имя инстанса.</param>
         /// <returns>True, если удалось получить инстанс, False в противном случае.</returns>
-        bool TryGet(out TInterface instance, TDiscriminator name = default);
+        bool TryGet(out TInterface? instance, TDiscriminator? name = default);
 
         /// <summary>
         /// Получить все зарегистрированные типы.
@@ -58,7 +58,7 @@ namespace NamedResolver.Abstractions
         /// Если не удалось получить инстанс из провайдера служб.
         /// </exception>
         /// <returns>Список (имя типа, инстанс)</returns>
-        IReadOnlyList<(TDiscriminator name, TInterface instance)> GetAllWithNames(Func<TDiscriminator, Type, bool> predicate = null);
+        IReadOnlyList<(TDiscriminator? name, TInterface instance)> GetAllWithNames(Func<TDiscriminator, Type, bool>? predicate = null);
 
         /// <summary>
         /// Получить все зарегистрированные типы.
@@ -67,6 +67,6 @@ namespace NamedResolver.Abstractions
         /// Если не удалось получить инстанс из провайдера служб.
         /// </exception>
         /// <returns>Список инстансов.</returns>
-        IReadOnlyList<TInterface> GetAll(Func<Type, bool> predicate = null);
+        IReadOnlyList<TInterface> GetAll(Func<Type, bool>? predicate = null);
     }
 }

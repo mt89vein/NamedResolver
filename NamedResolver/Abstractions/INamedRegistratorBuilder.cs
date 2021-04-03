@@ -24,7 +24,7 @@ namespace NamedResolver.Abstractions
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        INamedRegistratorBuilder<TDiscriminator, TInterface> Add(Type type, TDiscriminator name = default);
+        INamedRegistratorBuilder<TDiscriminator, TInterface> Add(Type type, TDiscriminator? name = default);
 
         /// <summary>
         /// Попытаться зарегистрировать тип с указанным именем.
@@ -35,7 +35,7 @@ namespace NamedResolver.Abstractions
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd(Type type, TDiscriminator name = default);
+        INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd(Type type, TDiscriminator? name = default);
 
         /// <summary>
         /// Зарегистрировать тип с указанным именем.
@@ -53,7 +53,7 @@ namespace NamedResolver.Abstractions
         /// <remarks>
         /// Фабрика будет вызываться на каждый резолв! Из-за особенностей стандартного DI.
         /// </remarks>
-        INamedRegistratorBuilder<TDiscriminator, TInterface> Add(Type type, Func<IServiceProvider, TInterface> factory, TDiscriminator name = default);
+        INamedRegistratorBuilder<TDiscriminator, TInterface> Add(Type type, Func<IServiceProvider, TInterface> factory, TDiscriminator? name = default);
 
         /// <summary>
         /// Попытаться зарегистрировать тип с указанным именем.
@@ -68,7 +68,7 @@ namespace NamedResolver.Abstractions
         /// <remarks>
         /// Фабрика будет вызываться на каждый резолв! Из-за особенностей стандартного DI.
         /// </remarks>
-        INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd(Type type, Func<IServiceProvider, TInterface> factory, TDiscriminator name = default);
+        INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd(Type type, Func<IServiceProvider, TInterface> factory, TDiscriminator? name = default);
 
         /// <summary>
         /// Зарегистрировать тип с указанным именем.
@@ -82,7 +82,7 @@ namespace NamedResolver.Abstractions
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        INamedRegistratorBuilder<TDiscriminator, TInterface> Add<TImplementation>(TDiscriminator name = default)
+        INamedRegistratorBuilder<TDiscriminator, TInterface> Add<TImplementation>(TDiscriminator? name = default)
             where TImplementation : class, TInterface;
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace NamedResolver.Abstractions
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
-        INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd<TImplementation>(TDiscriminator name = default)
+        INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd<TImplementation>(TDiscriminator? name = default)
             where TImplementation : class, TInterface;
 
         /// <summary>
@@ -113,7 +113,7 @@ namespace NamedResolver.Abstractions
         /// <remarks>
         /// Фабрика будет вызываться на каждый резолв! Из-за особенностей стандартного DI.
         /// </remarks>
-        INamedRegistratorBuilder<TDiscriminator, TInterface> Add<TImplementation>(Func<IServiceProvider, TInterface> factory, TDiscriminator name = default)
+        INamedRegistratorBuilder<TDiscriminator, TInterface> Add<TImplementation>(Func<IServiceProvider, TInterface> factory, TDiscriminator? name = default)
             where TImplementation : class, TInterface;
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace NamedResolver.Abstractions
         /// <remarks>
         /// Фабрика будет вызываться на каждый резолв! Из-за особенностей стандартного DI.
         /// </remarks>
-        INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd<TImplementation>(Func<IServiceProvider, TInterface> factory, TDiscriminator name = default)
+        INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd<TImplementation>(Func<IServiceProvider, TInterface> factory, TDiscriminator? name = default)
             where TImplementation : class, TInterface;
     }
 }
