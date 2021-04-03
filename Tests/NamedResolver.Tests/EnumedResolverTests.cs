@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using NamedResolver.Abstractions;
 using NamedResolver.Tests.TestClasses;
 using NUnit.Framework;
@@ -33,6 +33,7 @@ namespace NamedResolver.Tests
                     .Add(typeof(T2), EnumForResolver.T2_1)
                     .Add(typeof(T2), sp => sp.GetRequiredService<T2>(), EnumForResolver.T2_1_Factory)
                     .Add<T2>(sp => sp.GetRequiredService<T2>(), EnumForResolver.T2_1_Generic_Factory)
+                    .Add<T2>(sp => new T2(), EnumForResolver.T2_2_Generic_Factory)
                     .Add<T2>(EnumForResolver.TTT)
                     .Add<T1>(sp => sp.GetRequiredService<T1>());
 
@@ -51,6 +52,7 @@ namespace NamedResolver.Tests
                     .TryAdd(typeof(T2), EnumForResolver.T2_1) // +
                     .TryAdd(typeof(T2), sp => sp.GetRequiredService<T2>(), EnumForResolver.T2_1_Factory) // +
                     .TryAdd<T2>(sp => sp.GetRequiredService<T2>(), EnumForResolver.T2_1_Generic_Factory) // +
+                    .TryAdd<T2>(sp => new T2(), EnumForResolver.T2_2_Generic_Factory)
                     .TryAdd(typeof(T2), EnumForResolver.TTT) // +
                     .TryAdd(typeof(T1)) // +
                     .TryAdd<T1>(sp => sp.GetRequiredService<T1>()); // -
@@ -70,8 +72,9 @@ namespace NamedResolver.Tests
                     .TryAdd(typeof(T2), EnumForResolver.T2_1) // +
                     .TryAdd(typeof(T2), sp => sp.GetRequiredService<T2>(), EnumForResolver.T2_1_Factory) // +
                     .TryAdd<T2>(sp => sp.GetRequiredService<T2>(), EnumForResolver.T2_1_Generic_Factory) // +
+                    .TryAdd<T2>(sp => new T2(), EnumForResolver.T2_2_Generic_Factory) // +
                     .TryAdd(typeof(T2), EnumForResolver.TTT) // +
-                    .Add(typeof(T1)); // +
+                    .Add(typeof(T1));
 
                 yield return new TestFixtureData("EnumThirdFixtureCase", services.BuildServiceProvider());
             }
@@ -88,6 +91,7 @@ namespace NamedResolver.Tests
                     .TryAdd(typeof(T2), EnumForResolver.T2_1) // +
                     .TryAdd(typeof(T2), sp => sp.GetRequiredService<T2>(), EnumForResolver.T2_1_Factory) // +
                     .TryAdd<T2>(sp => sp.GetRequiredService<T2>(), EnumForResolver.T2_1_Generic_Factory) // +
+                    .TryAdd<T2>(sp => new T2(), EnumForResolver.T2_2_Generic_Factory) // +
                     .TryAdd(typeof(T2), EnumForResolver.TTT) // +
                     .TryAdd(typeof(T1), sp => sp.GetRequiredService<T1>()); // +
 
@@ -116,6 +120,7 @@ namespace NamedResolver.Tests
         public void CorrectlyResolveByName(EnumForResolver enumForResolver, Type type)
         {
             var fromGet = _namedResolver.Get(enumForResolver);
+            var fromGet2 = _namedResolver.Get(enumForResolver);
             var itemFound = _namedResolver.TryGet(out var fromTryGet, enumForResolver);
             var fromIndexer = _namedResolver[enumForResolver];
 
@@ -127,12 +132,39 @@ namespace NamedResolver.Tests
 
                 Assert.IsTrue(itemFound);
 
-                Assert.AreEqual(type, fromGet.GetType());
-                Assert.AreEqual(type, fromTryGet.GetType());
-                Assert.AreEqual(type, fromIndexer.GetType());
+                Assert.IsInstanceOf(type, fromGet);
+                Assert.IsInstanceOf(type, fromTryGet);
+                Assert.IsInstanceOf(type, fromIndexer);
 
+                Assert.AreSame(fromGet, fromGet2);
                 Assert.AreSame(fromGet, fromTryGet);
                 Assert.AreSame(fromIndexer, fromTryGet);
+            });
+        }
+
+        [TestCase(EnumForResolver.T2_2_Generic_Factory, typeof(T2))]
+        public void Registered_As_Factory_ReturnsNewInstanceEveryTime_If_Not_Proxied_Resolve_To_ServiceProvider(EnumForResolver enumForResolver, Type type)
+        {
+            var fromGet = _namedResolver.Get(enumForResolver);
+            var fromGet2 = _namedResolver.Get(enumForResolver);
+            var itemFound = _namedResolver.TryGet(out var fromTryGet, enumForResolver);
+            var fromIndexer = _namedResolver[enumForResolver];
+
+            Assert.Multiple(() =>
+            {
+                Assert.IsNotNull(fromGet);
+                Assert.IsNotNull(fromTryGet);
+                Assert.IsNotNull(fromIndexer);
+
+                Assert.IsTrue(itemFound);
+
+                Assert.IsInstanceOf(type, fromGet);
+                Assert.IsInstanceOf(type, fromTryGet);
+                Assert.IsInstanceOf(type, fromIndexer);
+
+                Assert.AreNotSame(fromGet, fromGet2);
+                Assert.AreNotSame(fromGet, fromTryGet);
+                Assert.AreNotSame(fromIndexer, fromTryGet);
             });
         }
 
@@ -167,7 +199,7 @@ namespace NamedResolver.Tests
         {
             var instances = _namedResolver.GetAll();
 
-            Assert.AreEqual(8, instances.Count);
+            Assert.AreEqual(9, instances.Count);
         }
 
         [Test]
@@ -178,7 +210,7 @@ namespace NamedResolver.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.AreEqual(8, instances.Count);
+                Assert.AreEqual(9, instances.Count);
                 Assert.IsNotNull(defaultInstance);
                 Assert.AreEqual(EnumForResolver.Default, name);
             });

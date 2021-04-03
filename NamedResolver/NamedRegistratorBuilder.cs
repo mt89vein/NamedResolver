@@ -14,7 +14,7 @@ namespace NamedResolver
     /// Тип, по которому можно однозначно определить конкретную реализацию <see cref="TInterface"/>.
     /// </typeparam>
     internal sealed class NamedRegistratorBuilder<TDiscriminator, TInterface>
-        : INamedRegistratorBuilder<TDiscriminator, TInterface> 
+        : INamedRegistratorBuilder<TDiscriminator, TInterface>
         where TInterface : class
     {
         #region Поля
@@ -136,6 +136,9 @@ namespace NamedResolver
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
+        /// <remarks>
+        /// Фабрика будет вызываться на каждый резолв! Из-за особенностей стандартного DI.
+        /// </remarks>
         public INamedRegistratorBuilder<TDiscriminator, TInterface> Add(Type type, Func<IServiceProvider, TInterface> factory, TDiscriminator name = default)
         {
             _namedRegistrator.Add(name, factory);
@@ -163,9 +166,12 @@ namespace NamedResolver
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
+        /// <remarks>
+        /// Фабрика будет вызываться на каждый резолв! Из-за особенностей стандартного DI.
+        /// </remarks>
         public INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd(Type type, Func<IServiceProvider, TInterface> factory, TDiscriminator name = default)
         {
-            if (_namedRegistrator.TryAdd(name, type))
+            if (_namedRegistrator.TryAdd(name, factory))
             {
                 _services.TryAdd(new ServiceDescriptor(type, factory, _serviceLifetime));
                 if (_equalityComparer.Equals(name, default))
@@ -227,6 +233,9 @@ namespace NamedResolver
         /// Если тип с таким именем уже зарегистрирован.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
+        /// <remarks>
+        /// Фабрика будет вызываться на каждый резолв! Из-за особенностей стандартного DI.
+        /// </remarks>
         public INamedRegistratorBuilder<TDiscriminator, TInterface> Add<TImplementation>(Func<IServiceProvider, TInterface> factory, TDiscriminator name = default)
             where TImplementation : class, TInterface
         {
@@ -243,6 +252,9 @@ namespace NamedResolver
         /// Если параметр type не реализует интерфейс <see cref="TInterface" />.
         /// </exception>
         /// <returns>Конфигуратор именованных типов.</returns>
+        /// <remarks>
+        /// Фабрика будет вызываться на каждый резолв! Из-за особенностей стандартного DI.
+        /// </remarks>
         public INamedRegistratorBuilder<TDiscriminator, TInterface> TryAdd<TImplementation>(Func<IServiceProvider, TInterface> factory, TDiscriminator name = default)
             where TImplementation : class, TInterface
         {

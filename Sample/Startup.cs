@@ -16,7 +16,7 @@ namespace Sample
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddScoped<DependentClass>()
-                    .AddNamed<ITest>()
+                    .AddNamed<string, ITest>()
                     .Add<T2>("333")
                     .Add<T2>()
                     .Add<T1>("123");
@@ -33,7 +33,7 @@ namespace Sample
             {
                 using var scope = app.ApplicationServices.CreateScope();
 
-                var resolver = scope.ServiceProvider.GetService<INamedResolver<ITest>>();
+                var resolver = scope.ServiceProvider.GetService<INamedResolver<string, ITest>>();
                 var instance1 = resolver.Get("123");
                 var instance11 = resolver.Get("123");
                 var instance2 = resolver.Get("333");
@@ -46,7 +46,7 @@ namespace Sample
             {
                 using var scope = app.ApplicationServices.CreateScope();
 
-                var resolver = scope.ServiceProvider.GetService<INamedResolver<ITest>>();
+                var resolver = scope.ServiceProvider.GetService<INamedResolver<string, ITest>>();
                 var instance1 = resolver.Get("123");
                 var instance11 = resolver.Get("123");
                 var instance2 = resolver.Get("333");
@@ -61,7 +61,7 @@ namespace Sample
 
                 var instance = scope.ServiceProvider.GetRequiredService<ITest>();
 
-                var resolver = scope.ServiceProvider.GetService<INamedResolver<ITest>>();
+                var resolver = scope.ServiceProvider.GetService<INamedResolver<string, ITest>>();
                 var instance1 = resolver.Get("123");
                 var instance11 = resolver.Get("123");
                 var instance2 = resolver.Get("333");

@@ -13,15 +13,15 @@ Look at tests for additional examples.
 
 You should install [NamedResolver with NuGet](https://www.nuget.org/packages/NamedResolver):
 
-    Install-Package NamedResolver -Version 2.1.0
+    Install-Package NamedResolver -Version 2.2.0
     
 via the .NET Core command line interface:
 
-    dotnet add package NamedResolver --version 2.1.0
+    dotnet add package NamedResolver --version 2.2.0
     
 or package reference
 
-    <PackageReference Include="NamedResolver" Version="2.1.0" />
+    <PackageReference Include="NamedResolver" Version="2.2.0" />
     
 ## Use cases
 
@@ -56,7 +56,7 @@ public class DependentClass
 
     public DependentClass(IEnumerable<ISomeInterface> implementations)
     {
-        // in this case we always resolve from DI all implementations of ISomeInterface. 
+        // in this case we always resolve from DI all implementations of ISomeInterface.
         _firstImplementation =
             implementations.SingleOrDefault(i => i.GetType() == typeof(FirstImplementation)) ??
             throw new ArgumentNullException($"Cannot resolve instance of type {typeof(FirstImplementation).FullName}");
@@ -147,6 +147,7 @@ public class DependentClass
 ```csharp
 
 services.AddNamed<string, ISomeInterface>(ServiceLifeTime.Scoped)
+        // note that such factory registration will not respect lifetime scope, and will be created every time!
         .Add<FirstImplementation>("FirstUseCase", _ => new FirstImplementation("FirstUseCase"));
         .Add<FirstImplementation>("SecondUseCase", _ => new FirstImplementation("SecondUseCase"));
 
@@ -238,7 +239,7 @@ services.AddNamed<string, ISomeInterface>(ServiceLifeTime.Scoped)
         .Add<FirstImplementation>("FirstUseCase", _ => new FirstImplementation("FirstUseCase"));
         // instance with name "FirstUseCase" already registered above,
         // this TryAdd with same name has no effect.
-        .TryAdd<FirstImplementation>("FirstUseCase", _ => new FirstImplementation("SecondUseCase")); 
+        .TryAdd<FirstImplementation>("FirstUseCase", _ => new FirstImplementation("FirstUseCase_skipped"));
 
 ```
 
@@ -251,7 +252,7 @@ Sometimes we want to register some default implementation after user configure c
 
 #region library code
 
-public class SomeLibraryOptions 
+public class SomeLibraryOptions
 {
     public INamedRegistratorBuilder<string, ISomeInterface> SomeInterfaceRegistrator { get; }
 
@@ -275,7 +276,7 @@ public static class SomeLibraryServiceCollectionExtensions
         configure?.Invoke(options);
 
         // try to add default implementation, if user not configured it.
-        builder.TryAdd<DefaultImplementation>(); 
+        builder.TryAdd<DefaultImplementation>();
 
         return services;
     }

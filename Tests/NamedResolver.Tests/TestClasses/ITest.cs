@@ -42,7 +42,8 @@ namespace NamedResolver.Tests.TestClasses
         T2_1 = 4,
         T2_1_Factory = 5,
         T2_1_Generic_Factory = 6,
-        TTT = 7
+        T2_2_Generic_Factory = 7,
+        TTT = 8,
     }
 
     /// <summary>
