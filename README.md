@@ -1,6 +1,8 @@
 NamedResolver
 =============
 
+> ⚠️Since AspNetCore 8.0 now implements [keyed DI services](https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-8#keyed-di-services) ❤️, this library goes to public archive :) but still available in [NuGet](https://www.nuget.org/packages/NamedResolver)!
+
 An abstraction that provide ability to use interface with multiple implementations or preconfigured instances in easy way. Drop in replacement for simple switch case factories.
 
 [![NuGet version (NamedResolver)](https://img.shields.io/nuget/v/NamedResolver.svg?style=flat-square)](https://www.nuget.org/packages/NamedResolver)
